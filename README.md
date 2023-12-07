@@ -54,6 +54,10 @@ Please keep in mind that Brachistools is now installed in this particular conda 
 ```sh
 python -m pip install notebook matplotlib
 ```
+7. Download model parameters from shared OneDrive [link](TBD). Then run the following command to tell Brachistools the location of the downloaded model parameters:
+```sh
+python -m brachistools config --model_param_location FILE_FOLDER_CONTAINING_MODEL_PARAMS
+```
 
 #### GPU version (CUDA) on Windows or Linux
 
