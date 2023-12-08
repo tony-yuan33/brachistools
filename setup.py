@@ -12,6 +12,7 @@ install_deps = [
     'scipy',
     'natsort',
     'torch>=1.6',
+    'opencv-python-headless',
     'fastremap',
     # 'imagecodecs',
 ]
