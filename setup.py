@@ -13,7 +13,7 @@ install_deps = [
     'natsort',
     'torch>=1.6',
     'fastremap',
-    'imagecodecs',
+    # 'imagecodecs',
 ]
 
 gui_deps = [
