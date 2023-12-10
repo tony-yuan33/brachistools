@@ -7,6 +7,8 @@ Adapted by: YUAN Ruihong
 import setuptools
 from setuptools import setup
 
+import sys
+
 install_deps = [
     'numpy>=1.20.0',
     'scipy',
@@ -29,6 +31,11 @@ gui_deps = [
 #     'sphinx_rtd_theme',
 #     'sphinx-argparse',
 # ]
+
+if sys.platform.startswith('win'):
+    install_deps.append('spams-bin')
+else:
+    install_deps.append('spams')
 
 try:
     import torch
