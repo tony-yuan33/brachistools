@@ -1,4 +1,7 @@
 
+from skimage import img_as_ubyte
+from skimage.measure import label, regionprops
+from skimage.color import label2rgb
 
 def merge_small_labels(labelled_mask, min_size, verbose = True):
     """Merge labels less than threshold size
@@ -61,3 +64,19 @@ def merge_small_labels(labelled_mask, min_size, verbose = True):
         print("Total merged:", merged_count)
         print("Total skipped:", skipped_count)
     return labels
+
+def label2rgb_bbox(labeled_image, image=None, **kwargs):
+    """Create bounding boxes based on label2rgb"""
+    colors = label2rgb(labeled_image, image=image, **kwargs)
+    colors = img_as_ubyte(colors)
+
+    im = colors.copy()
+    RED = [255, 0, 0]
+    for region in regionprops(labeled_image):
+        min_y, min_x, max_y, max_x = region.bbox
+        im[min_y:max_y, min_x, :] = RED
+        im[min_y:max_y, max_x-1, :] = RED
+        im[min_y, min_x:max_x, :] = RED
+        im[max_y-1, min_x:max_x, :] = RED
+
+    return im
