@@ -44,7 +44,7 @@ class SegmentationWindow(QMainWindow):
     def __init__(self, parent, img_fn) -> None:
         super().__init__(parent)
 
-        self.setGeometry(50, 50, 1500, 400)
+        self.setGeometry(50, 50, 1500, 500)
         self.setWindowTitle("Segmentation results of " + img_fn)
 
         self.cwidget = QWidget(self)
@@ -64,15 +64,32 @@ class SegmentationWindow(QMainWindow):
         self._instance_seg = None
 
     def _init_ui_components(self):
+        self.OrigImgLabel.setFixedSize(500, 500)
         self.l0.addWidget(self.OrigImgLabel, 0, 0)
+
+        self.InstanceSegLabel.setFixedSize(500, 500)
         self.l0.addWidget(self.InstanceSegLabel, 0, 1)
+
+        self.BinaryMaskLabel.setFixedSize(500, 500)
         self.l0.addWidget(self.BinaryMaskLabel, 0, 2)
 
     def _set_img_for_label(self, lab: QLabel, imarr):
-        pixmap = QtGui.QPixmap()
-        pixmap.loadFromData(imarr.tobytes())
+        from skimage import img_as_ubyte
+
+        imarr = img_as_ubyte(imarr)
+        if len(imarr.shape) < 3:
+            # Single-channel
+            qimg = QtGui.QImage(imarr.data,
+                imarr.shape[1], imarr.shape[0], imarr.shape[1],
+                QtGui.QImage.Format.Format_Grayscale8)
+        else:
+            qimg = QtGui.QImage(imarr.data,
+                imarr.shape[1], imarr.shape[0], imarr.shape[1]*3,
+                QtGui.QImage.Format.Format_RGB888)
+        pixmap = QtGui.QPixmap(qimg)
         lab.setPixmap(pixmap)
         lab.setScaledContents(True)
+        lab.update()
 
     def set_orig_img(self, imarr):
         self._orig_img = imarr
@@ -90,7 +107,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
 
-        self.setGeometry(50, 50, 1200, 1000)
+        self.setGeometry(50, 50, 1200, 700)
         self.setWindowTitle(f"brachistools v{brachistools_version}")
 
         # Set central widget for layout control
@@ -195,10 +212,10 @@ class MainWindow(QMainWindow):
             self.select_image((self._curr_index + 1) % len(self._input_filenames))
 
     def load_image(self, im_fn):
-        pixmap = QtGui.QPixmap(im_fn)
+        pixmap = QtGui.QPixmap(os.path.join(self._input_folder_path, im_fn))
         self.ImgDisplayLabel.setPixmap(pixmap)
         self.ImgDisplayLabel.setScaledContents(True)
-        self.ImgDisplayLabel.show()
+        self.ImgDisplayLabel.update()
 
     def select_input(self):
         folder_path = QFileDialog.getExistingDirectory(
@@ -216,17 +233,16 @@ class MainWindow(QMainWindow):
             self.InputListViewModel.setStringList(self._input_filenames)
 
     def keyPressEvent(self, event):
-        if self._loaded:
-            modifiers = (event.modifiers() & (
-                    QtCore.Qt.ControlModifier |
-                    QtCore.Qt.ShiftModifier |
-                    QtCore.Qt.AltModifier
-                ))
-            if not modifiers:
-                if event.key() == QtCore.Qt.Key_Left:
-                    self.prev_image()
-                if event.key() == QtCore.Qt.Key_Right:
-                    self.next_image()
+        modifiers = (event.modifiers() & (
+                QtCore.Qt.ControlModifier |
+                QtCore.Qt.ShiftModifier |
+                QtCore.Qt.AltModifier
+            ))
+        if not modifiers:
+            if event.key() == QtCore.Qt.Key_Left:
+                self.prev_image()
+            if event.key() == QtCore.Qt.Key_Right:
+                self.next_image()
 
     def _init_ui_components(self):
         self._init_slots()
@@ -255,7 +271,9 @@ class MainWindow(QMainWindow):
         self.InputListView.setModel(self.InputListViewModel)
         self.l0.addWidget(self.InputListView, 2, 0, 7, 3)
         woff = 3
-        self.l0.addWidget(self.ImgDisplayLabel, 2, woff, 6, 8)
+        self.ImgDisplayLabel.setFixedSize(600, 600)
+        self.l0.addWidget(self.ImgDisplayLabel, 2, woff, 6, 6,
+                          QtCore.Qt.AlignmentFlag.AlignCenter)
         self.l0.addWidget(self.DiagnosisLabel, 8, woff, 1, 4,
                           QtCore.Qt.AlignmentFlag.AlignRight)
         woff += 4
