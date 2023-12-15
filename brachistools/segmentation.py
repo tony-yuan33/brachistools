@@ -8,8 +8,8 @@ def merge_small_labels(labelled_mask, min_size, verbose = True):
     Small labels are merged to their largest neighbor in order to
     discourage over-segmentation.
     Label sizes are dynamically monitored to prevent labels
-    that become sufficiently large from merging from unnecessary
-    merging
+    that become sufficiently large during merges from unnecessary
+    merges
 
     Author: Ruihong Yuan
     """
