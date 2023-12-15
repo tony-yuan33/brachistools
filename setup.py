@@ -15,7 +15,8 @@ install_deps = [
     'scikit-image>=0.19.3',
     'natsort',
     'torch>=1.6',
-    'opencv-python-headless',
+    'tqdm',
+    # 'opencv-python-headless',
     # 'fastremap',
     # 'imagecodecs',
 ]
