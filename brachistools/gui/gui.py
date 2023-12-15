@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
             self.select_image((self._curr_index + 1) % len(self._input_filenames))
 
     def load_image(self, im_fn):
-        pixmap = QtGui.QPixmap(fileName=im_fn)
+        pixmap = QtGui.QPixmap(im_fn)
         self.ImgDisplayLabel.setPixmap(pixmap)
         self.ImgDisplayLabel.setScaledContents(True)
         self.ImgDisplayLabel.show()
@@ -204,6 +204,9 @@ class MainWindow(QMainWindow):
     def select_input(self):
         folder_path = QFileDialog.getExistingDirectory(
             self, "Select input folder")
+        if not folder_path:
+            return
+
         input_filenames = load_folder(folder_path, ['.PNG', '.JPG', '.JPEG'])
         if not input_filenames:
             QMessageBox.critical(self, "Invalid operation", "Input folder does not contain any PNG/JPG files")
@@ -265,6 +268,6 @@ class MainWindow(QMainWindow):
         self.SegmentationButton.clicked.connect(self.do_segment)
         self.DiagnosisButton.clicked.connect(self.do_classify)
 
-        self.InputListView.clicked.connect(self.select_image)
+        self.InputListView.clicked.connect(lambda index: self.select_image(index.row()))
         self.PrevImgButton.clicked.connect(self.prev_image)
         self.NextImgButton.clicked.connect(self.next_image)
