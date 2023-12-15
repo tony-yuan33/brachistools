@@ -1,7 +1,60 @@
 
-from skimage import img_as_ubyte
-from skimage.measure import label, regionprops
-from skimage.color import label2rgb
+from skimage.exposure import equalize_adapthist
+from skimage.filters import threshold_otsu
+from skimage.morphology import remove_small_objects, remove_small_holes
+from scipy.ndimage import distance_transform_edt
+from skimage.feature import peak_local_max
+from skimage.segmentation import watershed
+import numpy as np
+
+from .transforms import VahadaneStainDeconvolution, inverted_gray_scale
+from .utils import ParamDict
+
+def vahadane(sparsity_regularizer):
+    vahadane_transform = VahadaneStainDeconvolution(sparsity_regularizer=sparsity_regularizer)
+    def deconvolute_hematoxylin(image):
+        return vahadane_transform.F(image=image, method='hematoxylin')
+    return deconvolute_hematoxylin
+
+default_segmentation_params = ParamDict({
+    'vahadane:sparsity_regularizer': 0.75,
+    'equalize_adapthist:clip_limit': 0.01,
+    'remove_small_objects:min_size': 250,
+    'remove_small_holes:area_threshold': 100,
+    'peak_local_max': {
+        'min_distance': 12,
+        'footprint': np.ones((15, 15)),
+        'threshold_rel': 0.2
+    },
+    'merge_small_labels': {
+        'min_size': 300,
+        'verbose': False
+    }
+})
+
+def segmentation_pipeline(input_image, params):
+    vahadane_transform = vahadane(**params['vahadane'])
+
+    image_H = vahadane_transform(input_image)
+    image_H = equalize_adapthist(image_H, **params['equalize_adapthist'])
+    image_H = inverted_gray_scale(image_H)
+    nuclei = image_H > threshold_otsu(image_H)
+    nuclei = remove_small_objects(nuclei, **params['remove_small_objects'])
+    nuclei = remove_small_holes(nuclei, **params['remove_small_holes'])
+
+    distances = distance_transform_edt(nuclei)
+    local_maxima_idx = peak_local_max(distances, **params['peak_local_max'])
+    markers = peaks_to_markers(local_maxima_idx, shape=nuclei.shape)
+    labeled_nuclei = watershed(-distances, markers, mask=nuclei)
+    labeled_nuclei = merge_small_labels(labeled_nuclei, **params['merge_small_labels'])
+    return nuclei, labeled_nuclei
+
+def peaks_to_markers(peaks, shape):
+    from skimage.measure import label
+    mask = np.zeros(shape, dtype=bool)
+    mask[tuple(peaks.T)] = True
+    markers = label(mask)
+    return markers
 
 def merge_small_labels(labelled_mask, min_size, verbose = True):
     """Merge labels less than threshold size
@@ -67,6 +120,10 @@ def merge_small_labels(labelled_mask, min_size, verbose = True):
 
 def label2rgb_bbox(labeled_image, image=None, **kwargs):
     """Create bounding boxes based on label2rgb"""
+    from skimage import img_as_ubyte
+    from skimage.measure import label, regionprops
+    from skimage.color import label2rgb
+
     colors = label2rgb(labeled_image, image=image, **kwargs)
     colors = img_as_ubyte(colors)
 
