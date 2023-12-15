@@ -4,7 +4,7 @@ class ParamDict:
     """Hold a parameter dict for easy parameter injection
     """
     def __init__(self, params) -> None:
-        self._params = self._augment_params(params)
+        self._params = ParamDict._augment_params(params)
 
     @classmethod
     def _augment_params(cls, params: dict):
@@ -23,6 +23,9 @@ class ParamDict:
 
         par.update(params)
         return par
+
+    def __getitem__(self, key):
+        return self._params[key]
 
     def __getattr__(self, key):
         return self._params[key]
