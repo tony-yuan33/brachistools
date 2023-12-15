@@ -107,6 +107,8 @@ def inverted_gray_scale(image):
     from skimage.color import rgb2gray
     from skimage import img_as_ubyte
 
+    assert image.dtype == np.uint8
+
     image_gray = rgb2gray(image)
     image_gray_inverted = 1 - image_gray
     image_gray_inverted = img_as_ubyte(image_gray_inverted)

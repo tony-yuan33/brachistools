@@ -44,7 +44,6 @@ class SegmentationWindow(QMainWindow):
     def __init__(self, parent, img_fn) -> None:
         super().__init__(parent)
 
-        self = QMainWindow(parent=self)
         self.setGeometry(50, 50, 1500, 400)
         self.setWindowTitle("Segmentation results of " + img_fn)
 
@@ -248,7 +247,7 @@ class MainWindow(QMainWindow):
         self.l0.addWidget(self.PrevImgButton, 1, woff, 1, 2)
         woff += 2
         self.l0.addWidget(self.ImgFileLabel, 1, woff, 1, 2)
-        woff += 4
+        woff += 2
         self.l0.addWidget(self.NextImgButton, 1, woff, 1, 2)
 
         self.InputListViewModel = QtCore.QStringListModel()

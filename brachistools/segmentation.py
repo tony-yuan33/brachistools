@@ -33,10 +33,14 @@ default_segmentation_params = ParamDict({
 })
 
 def segmentation_pipeline(input_image, params):
+    from skimage import img_as_ubyte
+
     vahadane_transform = vahadane(**params['vahadane'])
 
+    input_image = img_as_ubyte(input_image)
     image_H = vahadane_transform(input_image)
     image_H = equalize_adapthist(image_H, **params['equalize_adapthist'])
+    image_H = img_as_ubyte(input_image)
     image_H = inverted_gray_scale(image_H)
     nuclei = image_H > threshold_otsu(image_H)
     nuclei = remove_small_objects(nuclei, **params['remove_small_objects'])
