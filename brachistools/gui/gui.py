@@ -197,6 +197,8 @@ class MainWindow(QMainWindow):
                                 "Input file list is empty")
             return
 
+        self.CellCountTextEdit.clear()
+        self.DiagnosisTextEdit.clear()
         selected_img_fn = self._input_filenames[index]
         try:
             self._curr_img = imread(os.path.join(self._input_folder_path, selected_img_fn))
