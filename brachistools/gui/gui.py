@@ -29,8 +29,8 @@ from ..classification import classification_pipeline
 global logger
 def run():
     from ..io import logger_setup
-    global logger
 
+    global logger
     logger, _ = logger_setup()
     warnings.filterwarnings("ignore")
 
