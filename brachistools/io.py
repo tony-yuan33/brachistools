@@ -47,7 +47,7 @@ def logger_setup():
 
     return logger, log_file
 
-def load_folder(path, file_ext) -> 'list[str]':
+def load_folder(path, file_ext, absolute_path = False) -> 'list[str]':
     """Get all file names with specified extension(s) under a folder"""
     from typing import Iterable
 
@@ -61,9 +61,15 @@ def load_folder(path, file_ext) -> 'list[str]':
         for file in files:
             for ext in file_ext:
                 if file.lower().endswith(ext):
-                    yield file
+                    if absolute_path:
+                        yield os.path.join(path, file)
+                    else:
+                        yield file
 
     return natsorted(get_results())
+
+def labels_to_xml(labels) -> ET.ElementTree:
+    ...
 
 # def xml_to_mask(filename):
 #     pass

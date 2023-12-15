@@ -21,11 +21,24 @@ class ParamDict:
                 for k2, v2 in v.items():
                     par[f"{k}:{k2}"] = v2
 
-        par.update(params)
         return par
+
+    def copy(self):
+        # Save parsing
+        x = ParamDict({})
+        x._params = self._params.copy()
+        return x
 
     def __getitem__(self, key):
         return self._params[key]
 
-    def __getattr__(self, key):
-        return self._params[key]
+    def __setitem__(self, key, value):
+        try:
+            method, param_name = key.split(':')
+            meth_dict = self._params.setdefault(method, dict())
+            meth_dict[param_name] = value
+        except:
+            if not isinstance(value, dict):
+                raise ValueError
+
+            self._params[key] = value.copy()
