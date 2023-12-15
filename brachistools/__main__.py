@@ -1,4 +1,7 @@
 
+from tqdm import tqdm
+import numpy as np
+
 import argparse
 from pathlib import Path
 import os, sys
@@ -21,7 +24,7 @@ import logging
 from brachistools.segmentation import segmentation_pipeline, default_segmentation_params
 # TODO: Import components
 # from brachistools.classification import ...
-from brachistools.io import load_folder
+from brachistools.io import load_folder, imread, imsave, labels_to_xml
 from brachistools.version import version_str
 
 def get_arg_parser():
@@ -45,29 +48,36 @@ def get_arg_parser():
 
     segmentation_args = segment_subparser.add_argument_group("Segmentation Pipeline Arguments")
     segmentation_args.add_argument('--vahadane-sparsity_regularizer',
-                                   required=False, default=0.75, type=float,
+                                   required=False, type=float,
+                                   default=default_segmentation_params['vahadane']['sparsity_regularizer'],
                                    help="sparsity regularizer of dictionary learning in Vahadane's "
                                    "H&E deconvolution algorithm. Smaller values lead to less learning "
                                    "capability and usually result in more complete nucleus shapes (increases "
                                    "false positive rate)")
     segmentation_args.add_argument('--equalize_adapthist-clip_limit',
-                                   required=False, default=0.01, type=float,
+                                   required=False, type=float,
+                                   default=default_segmentation_params['equalize_adapthist']['clip_limit'],
                                    help="clip_limit parameter in skimage.exposure.equalize_adapthist")
     segmentation_args.add_argument('--small_objects-min_size',
-                                   required=False, default=250, type=int,
+                                   required=False, type=int,
+                                   default=default_segmentation_params['remove_small_objects']['min_size'],
                                    help="minimum threshold size of connected regions of 1")
     segmentation_args.add_argument('--small_holes-area_threshold',
-                                   required=False, default=100, type=int,
+                                   required=False, type=int,
+                                   default=default_segmentation_params['remove_small_holes']['area_threshold'],
                                    help="maximum threshold size of connected regions of 0")
     segmentation_args.add_argument('--local_max-min_distance',
-                                   required=False, default=12, type=int,
+                                   required=False, type=int,
+                                   default=default_segmentation_params['peak_local_max']['min_distance'],
                                    help="minimum distance between two local maxima. Combats over-segmentation")
     segmentation_args.add_argument('--local_max-threshold_rel',
-                                   required=False, default=0.2, type=float,
+                                   required=False, type=float,
+                                   default=default_segmentation_params['peak_local_max']['threshold_rel'],
                                    help="filter smaller maxima based on (this value * max(all_maxima)). "
                                    "Combats over-segmentation")
     segmentation_args.add_argument('--small_labels-min_size',
-                                   required=False, default=300, type=int,
+                                   required=False, type=int,
+                                   default=default_segmentation_params['merge_small_labels']['min_size'],
                                    help="minimum size of an independent label; smaller labels will "
                                    "be merged to their largest neighbors. Combats over-segmentation")
 
@@ -144,12 +154,40 @@ def main():
         sys.exit(-1)
 
     if args.dir:
-        image_names = load_folder(args.dir)
+        image_names = load_folder(args.dir, file_ext=['PNG', 'JPG', 'JPEG'], absolute_path=True)
+        if len(image_names) > 1:
+            image_names = tqdm(image_names)
     elif args.image_path:
+        args.dir = str(Path(args.image_path).parent)
         image_names = [args.image_path]
+    else:
+        logger.critical("Input is not specified")
+        sys.exit(-1)
+
+    if not args.save_dir:
+        args.save_dir = args.dir
 
     if args.command == 'segment':
-        ...
+        segment_params = default_segmentation_params.copy()
+        segment_params['vahadane:sparsity_regularizer'] = args.vahadane_sparsity_regularizer
+        segment_params['equalize_adapthist:clip_limit'] = args.equalize_adapthist_clip_limit
+        segment_params['remove_small_objects:min_size'] = args.small_objects_min_size
+        segment_params['remove_small_holes:area_threshold'] = args.small_holes_area_threshold
+        segment_params['peak_local_max:min_distance'] = args.local_max_min_distance
+        segment_params['peak_local_max:threshold_rel'] = args.local_max_threshold_rel
+        segment_params['merge_small_labels:min_size'] = args.small_labels_min_size
+
+        for fn in image_names:
+            image = imread(fn)
+            nucleus, labeled_nucleus = segmentation_pipeline(image, segment_params)
+
+            root, old_ext = os.path.splitext(fn)
+            imsave(f"{root}_mask.{args.save_format}", nucleus)
+            labels_to_xml(labeled_nucleus).write(f"{root}_seg.xml")
+
+            if args.save_npy:
+                np.save(root + '_mask.npy', nucleus)
+                np.save(root + '_mask_labels.npy', labeled_nucleus)
 
     if args.command == 'classify':
         ...
