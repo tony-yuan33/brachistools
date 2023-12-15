@@ -20,15 +20,15 @@ from qtpy.QtWidgets import (
     QWidget,
     QAction)
 
-from .io import load_folder, imread
+from brachistools.gui.io import load_folder, imread
 
-from ..version import brachistools_version
-from ..segmentation import segmentation_pipeline, default_segmentation_params, label2rgb_bbox
-from ..classification import classification_pipeline
+from brachistools.version import brachistools_version
+from brachistools.segmentation import segmentation_pipeline, default_segmentation_params, label2rgb_bbox
+from brachistools.classification import classification_pipeline
 
 global logger
 def run():
-    from ..io import logger_setup
+    from brachistools.io import logger_setup
 
     global logger
     logger, _ = logger_setup()
