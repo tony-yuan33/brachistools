@@ -22,8 +22,56 @@ from qtpy.QtWidgets import (
 from .io import load_folder, imread
 
 from ..version import brachistools_version
-from ..segmentation import segmentation_pipeline
+from ..segmentation import segmentation_pipeline, default_segmentation_params, label2rgb_bbox
 from ..classification import classification_pipeline
+
+
+class SegmentationWindow(QMainWindow):
+    def __init__(self, parent, img_fn) -> None:
+        super().__init__(parent)
+
+        self = QMainWindow(parent=self)
+        self.setGeometry(50, 50, 1500, 400)
+        self.setWindowTitle("Segmentation results of " + img_fn)
+
+        self.cwidget = QWidget(self)
+        self.l0 = QGridLayout()
+        self.cwidget.setLayout(self.l0)
+        self.setCentralWidget(self.cwidget)
+        self.l0.setVerticalSpacing(6)
+
+        self.OrigImgLabel = QLabel()
+        self.InstanceSegLabel = QLabel()
+        self.BinaryMaskLabel = QLabel()
+
+        self._init_ui_components()
+
+        self._orig_img = None
+        self._binary_mask = None
+        self._instance_seg = None
+
+    def _init_ui_components(self):
+        self.l0.addWidget(self.OrigImgLabel, 0, 0)
+        self.l0.addWidget(self.InstanceSegLabel, 0, 1)
+        self.l0.addWidget(self.BinaryMaskLabel, 0, 2)
+
+    def _set_img_for_label(self, lab: QLabel, imarr):
+        pixmap = QtGui.QPixmap()
+        pixmap.loadFromData(imarr.tobytes())
+        lab.setPixmap(pixmap)
+        lab.setScaledContents(True)
+
+    def set_orig_img(self, imarr):
+        self._orig_img = imarr
+        self._set_img_for_label(self.OrigImgLabel, imarr)
+
+    def set_instance_seg(self, imarr):
+        self._instance_seg = imarr
+        self._set_img_for_label(self.InstanceSegLabel, label2rgb_bbox(imarr, self._orig_img))
+
+    def set_binary_mask(self, imarr):
+        self._binary_mask = imarr
+        self._set_img_for_label(self.BinaryMaskLabel, imarr)
 
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
@@ -57,6 +105,9 @@ class MainWindow(QMainWindow):
         # Initialize UI components
         self._init_ui_components()
 
+        # Set param slots
+        self._segmentation_params = default_segmentation_params
+
         # Set data slots
         self._input_filenames = []
         self._input_folder_path = None
@@ -66,11 +117,22 @@ class MainWindow(QMainWindow):
     def help_window(self):
         ...
 
-    def segmentation_window(self):
-        ...
+    def segmentation_window(self, nuclei, labeled_nuclei):
+        segwindow = SegmentationWindow(
+            parent=self, img_fn=self._input_filenames[self._curr_index])
+        segwindow.set_orig_img(self._curr_img)
+        segwindow.set_binary_mask(nuclei)
+        segwindow.set_instance_seg(labeled_nuclei)
+        segwindow.show()
 
     def segment_current(self):
-        ...
+        if self._curr_img is None:
+            QMessageBox.critical(self, "Invalid operation", "Please select an image")
+            return
+
+        nuclei, labeled_nuclei = segmentation_pipeline(
+            input_image=self._curr_img, params=self._segmentation_params)
+        self.segmentation_window(nuclei=nuclei, labeled_nuclei=labeled_nuclei)
 
     def classify_current(self):
         ...
