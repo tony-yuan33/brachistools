@@ -1,11 +1,12 @@
 
-import sys
+import os, sys
 
 import cv2
 import logging
 import pathlib
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from natsort import natsorted
 from skimage.io import imread, imsave
 
 from .version import version_str
@@ -45,6 +46,24 @@ def logger_setup():
     logger.info(version_str)
 
     return logger, log_file
+
+def load_folder(path, file_ext) -> 'list[str]':
+    """Get all file names with specified extension(s) under a folder"""
+    from typing import Iterable
+
+    if isinstance(file_ext, Iterable):
+        file_ext = list(ext.lower() for ext in file_ext)
+    else:
+        file_ext = [file_ext.lower()]
+
+    files = os.listdir(path)
+    def get_results():
+        for file in files:
+            for ext in file_ext:
+                if file.lower().endswith(ext):
+                    yield file
+
+    return natsorted(get_results())
 
 # def xml_to_mask(filename):
 #     pass
