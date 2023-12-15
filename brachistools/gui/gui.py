@@ -188,10 +188,12 @@ class MainWindow(QMainWindow):
         self.load_image(selected_img_fn)
 
     def prev_image(self):
-        self.select_image((self._curr_index - 1) % len(self._input_filenames))
+        if self._curr_index is not None and self._input_filenames:
+            self.select_image((self._curr_index - 1) % len(self._input_filenames))
 
     def next_image(self):
-        self.select_image((self._curr_index + 1) % len(self._input_filenames))
+        if self._curr_index is not None and self._input_filenames:
+            self.select_image((self._curr_index + 1) % len(self._input_filenames))
 
     def load_image(self, im_fn):
         pixmap = QtGui.QPixmap(fileName=im_fn)
@@ -209,6 +211,7 @@ class MainWindow(QMainWindow):
             self._input_folder_path = folder_path
             self.InputFolderLabel.setText(folder_path)
             self._input_filenames = input_filenames
+            self.InputListViewModel.setStringList(self._input_filenames)
 
     def keyPressEvent(self, event):
         if self._loaded:
