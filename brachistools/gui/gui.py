@@ -74,10 +74,10 @@ class MainWindow(QMainWindow):
         ...
 
     def segment_all(self):
-        ...
+        QMessageBox.critical(self, "Not supported", "Sorry, this option is under development")
 
     def classify_all(self):
-        ...
+        QMessageBox.critical(self, "Not supported", "Sorry, this option is under development")
 
     def do_segment(self):
         if self.BatchCheckBox.isChecked():
@@ -93,15 +93,21 @@ class MainWindow(QMainWindow):
 
     def select_image(self, index):
         if not self._input_filenames:
-            QMessageBox.warning(self,
+            QMessageBox.critical(self,
                                 "Invalid operation",
                                 "Input file list is empty")
             return
 
+        selected_img_fn = self._input_filenames[index]
+        try:
+            self._curr_img = imread(os.path.join(self._input_folder_path, selected_img_fn))
+        except:
+            QMessageBox.critical(self, "Invalid operation", "Failed to load image")
+            return
+
         self._curr_index = index
-        selected_img_fn = self._input_filenames[self._curr_index]
+        self.ImgFileLabel.setText(selected_img_fn)
         self.load_image(selected_img_fn)
-        self._curr_img = imread(os.path.join(self._input_folder_path, selected_img_fn))
 
     def prev_image(self):
         self.select_image((self._curr_index - 1) % len(self._input_filenames))
@@ -120,7 +126,7 @@ class MainWindow(QMainWindow):
             self, "Select input folder")
         input_filenames = load_folder(folder_path, ['PNG', 'JPG', 'JPEG'])
         if not input_filenames:
-            QMessageBox.warning(self, "Invalid operation", "Input folder does not contain any PNG/JPG files")
+            QMessageBox.critical(self, "Invalid operation", "Input folder does not contain any PNG/JPG files")
         else:
             self._input_folder_path = folder_path
             self.InputFolderLabel.setText(folder_path)
