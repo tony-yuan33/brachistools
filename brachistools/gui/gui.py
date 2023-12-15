@@ -2,6 +2,8 @@
 import warnings
 import os, sys
 
+import numpy as np
+
 from PyQt6 import QtCore, QtGui
 from qtpy import QtGui, QtCore
 from qtpy.QtWidgets import (
@@ -129,6 +131,8 @@ class MainWindow(QMainWindow):
         self.NextImgButton = QPushButton('Next')
         self.InputListView = QListView()
         self.ImgDisplayLabel = QLabel()
+        self.CellCountLabel = QLabel('Cell counts:')
+        self.CellCountTextEdit = QPlainTextEdit()
         self.DiagnosisLabel = QLabel('Suggested diagnosis:')
         self.DiagnosisTextEdit = QPlainTextEdit()
 
@@ -162,6 +166,7 @@ class MainWindow(QMainWindow):
 
         nuclei, labeled_nuclei = segmentation_pipeline(
             input_image=self._curr_img, params=self._segmentation_params)
+        self.CellCountTextEdit.setPlainText(str(len(set(labeled_nuclei.flat))))
         self.segmentation_window(nuclei=nuclei, labeled_nuclei=labeled_nuclei)
 
     def classify_current(self):
@@ -217,11 +222,21 @@ class MainWindow(QMainWindow):
         self.ImgDisplayLabel.setScaledContents(True)
         self.ImgDisplayLabel.update()
 
+    def clear_panel(self):
+        self.CellCountTextEdit.clear()
+        self.DiagnosisTextEdit.clear()
+        self._curr_img = None
+        self._curr_index = None
+        self.ImgFileLabel.clear()
+        self.ImgDisplayLabel.clear()
+
     def select_input(self):
         folder_path = QFileDialog.getExistingDirectory(
             self, "Select input folder")
         if not folder_path:
             return
+
+        self.clear_panel()
 
         input_filenames = load_folder(folder_path, ['.PNG', '.JPG', '.JPEG'])
         if not input_filenames:
@@ -275,9 +290,14 @@ class MainWindow(QMainWindow):
         self.ImgDisplayLabel.setFixedSize(600, 600)
         self.l0.addWidget(self.ImgDisplayLabel, 2, woff, 6, 6,
                           QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.l0.addWidget(self.DiagnosisLabel, 8, woff, 1, 4,
+        self.l0.addWidget(self.CellCountLabel, 8, woff, 1, 1,
                           QtCore.Qt.AlignmentFlag.AlignRight)
-        woff += 4
+        woff += 1
+        self.l0.addWidget(self.CellCountTextEdit, 8, woff, 1, 2)
+        woff += 2
+        self.l0.addWidget(self.DiagnosisLabel, 8, woff, 1, 1,
+                          QtCore.Qt.AlignmentFlag.AlignRight)
+        woff += 1
         self.l0.addWidget(self.DiagnosisTextEdit, 8, woff, 1, 2)
 
     def _init_slots(self):

@@ -73,7 +73,7 @@ def labels_to_xml(labels) -> ET.ElementTree:
     from skimage.measure import find_contours
     root = ET.Element("Regions")
 
-    for label in range(1, np.max(labels) + 1):
+    for label in set(labels.flat):
         region_mask = (labels == label)
 
         # Find contour points to write as a polygon
