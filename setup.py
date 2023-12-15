@@ -95,6 +95,7 @@ setup(
         'setuptools_scm',
     ],
     packages=setuptools.find_packages(),
+    package_data={'': ['config.ini']},
     use_scm_version=True,
     install_requires=install_deps,
     tests_require=[
