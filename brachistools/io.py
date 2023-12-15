@@ -8,6 +8,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 from natsort import natsorted
 from skimage.io import imread, imsave
+import numpy as np
 
 from .version import version_str
 
@@ -69,7 +70,34 @@ def load_folder(path, file_ext, absolute_path = False) -> 'list[str]':
     return natsorted(get_results())
 
 def labels_to_xml(labels) -> ET.ElementTree:
-    ...
+    from skimage.measure import find_contours
+    root = ET.Element("Regions")
+
+    for label in range(1, np.max(labels) + 1):
+        region_mask = (labels == label)
+
+        # Find contour points to write as a polygon
+        contours = find_contours(region_mask, fully_connected='high')
+
+        for i, contour in enumerate(contours):
+            rmin, cmin, rmax, cmax = np.min(contour, axis=0), np.max(contour, axis=0)
+
+            if i == 0:
+                region_id = str(label)
+            else:  # very unlikely to have multiple regions for the same symbol
+                region_id = f"{label}_{i}"
+
+            region_elem = ET.SubElement(root, "Region", Id=region_id, Label=label)
+            vertices_elem = ET.SubElement(region_elem, "Vertices")
+            for y, x in contour:
+                ET.SubElement(vertices_elem, "Vertex", X=str(x), Y=str(y))
+            bbox_elem = ET.SubElement(
+                region_elem, "BoundingBox",
+                X=str(cmin), Y=str(rmin),
+                Width=str(cmax-cmin), Height=str(rmax-rmin))
+
+    tree = ET.ElementTree(root)
+    return tree
 
 # def xml_to_mask(filename):
 #     pass
