@@ -42,6 +42,61 @@ def run():
     retv = app.exec()
     sys.exit(retv)
 
+class Segment1Thread(QtCore.QThread):
+    MAX_PROGRESS = 11
+
+    update_progress = QtCore.pyqtSignal(int)
+
+    def __init__(self, params, parent=None):
+        super().__init__(parent)
+
+        self.params = params
+
+        from brachistools.segmentation import vahadane
+        self.vahadane_transform = vahadane(**params['vahadane'])
+
+    def run(self):
+        from skimage import img_as_ubyte
+        from brachistools.segmentation import (
+            vahadane, equalize_adapthist,
+            inverted_gray_scale, threshold_otsu,
+            remove_small_objects, remove_small_holes,
+            distance_transform_edt, peak_local_max,
+            peaks_to_markers, watershed,
+            merge_small_labels
+        )
+
+        input_image = img_as_ubyte(input_image)
+        image_H = self.vahadane_transform(input_image)
+        self.update_progress.emit(1)
+
+        image_H = equalize_adapthist(image_H, **self.params['equalize_adapthist'])
+        self.update_progress.emit(2)
+
+        image_H = img_as_ubyte(input_image)
+        image_H = inverted_gray_scale(image_H)
+        self.update_progress.emit(3)
+
+        nuclei = image_H > threshold_otsu(image_H)
+        self.update_progress.emit(4)
+
+        nuclei = remove_small_objects(nuclei, **self.params['remove_small_objects'])
+        self.update_progress.emit(5)
+        nuclei = remove_small_holes(nuclei, **self.params['remove_small_holes'])
+        self.update_progress.emit(6)
+
+        distances = distance_transform_edt(nuclei)
+        self.update_progress.emit(7)
+        local_maxima_idx = peak_local_max(distances, **self.params['peak_local_max'])
+        self.update_progress.emit(8)
+        markers = peaks_to_markers(local_maxima_idx, shape=nuclei.shape)
+        self.update_progress.emit(9)
+        labeled_nuclei = watershed(-distances, markers, mask=nuclei)
+        self.update_progress.emit(10)
+        labeled_nuclei = merge_small_labels(labeled_nuclei, **self.params['merge_small_labels'])
+        self.update_progress.emit(11)
+        return nuclei, labeled_nuclei
+
 class SegmentationWindow(QMainWindow):
     def __init__(self, parent, img_fn) -> None:
         super().__init__(parent)
@@ -163,6 +218,19 @@ class MainWindow(QMainWindow):
         if self._curr_img is None:
             QMessageBox.critical(self, "Invalid operation", "Please select an image")
             return
+
+        segment_thread = Segment1Thread(self._segmentation_params, self)
+
+        segment_progress = QProgressDialog(self)
+        segment_progress.setWindowTitle("Segmentation in progress...")
+        segment_progress.setLabelText("Please wait")
+        segment_progress.setRange(0, Segment1Thread.MAX_PROGRESS)
+        segment_progress.setModal(True)
+        segment_progress.canceled.connect(segment_thread.quit)
+        segment_thread.finished.connect(segment_progress.accept)
+        segment_thread.update_progress.connect(segment_progress.setValue)
+        segment_thread.start()
+        segment_progress.exec()
 
         nuclei, labeled_nuclei = segmentation_pipeline(
             input_image=self._curr_img, params=self._segmentation_params)
