@@ -24,7 +24,7 @@ def abbrev_path(path, max_char_length=30):
         return path[:clip_len] + '...' + path[-clip_len-4:]
 
     result = dirs[-1]
-    for dir in reversed(dirs[1:]):
+    for dir in reversed(dirs[1:-1]):
         if len(result) + len(dir) + 4 <= max_char_length:
             result = dir + os.path.sep + result
         else:
