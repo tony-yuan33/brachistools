@@ -29,11 +29,9 @@ from brachistools.version import version_str
 
 def get_arg_parser():
     parser = argparse.ArgumentParser(description="Brachistools Command Line Parameters")
-
-    parser.add_argument('--version', action='store_true', help="show brachistools version info")
     parser.add_argument('--verbose', action='store_true', help="print additional messages")
 
-    parser.add_argument('command', type=str, choices=['segment', 'classify', 'config', 'gui'])
+    parser.add_argument('command', type=str, choices=['segment', 'classify', 'config', 'gui', 'version'])
 
     subparsers = parser.add_subparsers(dest='command')
 
@@ -108,7 +106,7 @@ def get_arg_parser():
 def main():
     args = get_arg_parser().parse_args()
 
-    if args.version:
+    if args.command == 'version':
         print(version_str)
         return
 
@@ -191,3 +189,6 @@ def main():
 
     if args.command == 'classify':
         ...
+
+if __name__ == "__main__":
+    main()
