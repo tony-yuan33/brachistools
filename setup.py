@@ -12,10 +12,11 @@ import sys
 install_deps = [
     'numpy>=1.20.0',
     'scipy',
+    'scikit-image>=0.19.3',
     'natsort',
     'torch>=1.6',
     'opencv-python-headless',
-    'fastremap',
+    # 'fastremap',
     # 'imagecodecs',
 ]
 

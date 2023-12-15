@@ -21,14 +21,16 @@ from qtpy.QtWidgets import (
 
 from .io import load_folder, imread
 
-from .. import version
+from ..version import brachistools_version
+from ..segmentation import segmentation_pipeline
+from ..classification import classification_pipeline
 
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
 
         self.setGeometry(50, 50, 1200, 1000)
-        self.setWindowTitle(f"brachistools v{version.vers}")
+        self.setWindowTitle(f"brachistools v{brachistools_version}")
 
         # Set central widget for layout control
         self.cwidget = QWidget(self)

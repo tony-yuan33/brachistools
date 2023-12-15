@@ -10,12 +10,12 @@ from platform import python_version
 import torch
 
 try:
-    vers = version("brachistools")
+    brachistools_version = version("brachistools")
 except PackageNotFoundError:
-    vers = 'unknown'
+    brachistools_version = 'unknown'
 
 version_str = f"""
-brachistools version:\t{vers}
+brachistools version:\t{brachistools_version}
 platform:           \t{sys.platform}
 python version:     \t{python_version()}
 torch version:      \t{torch.__version__}"""
