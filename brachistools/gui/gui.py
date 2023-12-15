@@ -45,11 +45,12 @@ def run():
 class Segment1Thread(QtCore.QThread):
     MAX_PROGRESS = 11
 
-    update_progress = QtCore.pyqtSignal(int)
+    update_progress = QtCore.Signal(int)
 
-    def __init__(self, params, parent=None):
+    def __init__(self, input_image, params, parent=None):
         super().__init__(parent)
 
+        self.input_image = input_image
         self.params = params
 
         from brachistools.segmentation import vahadane
@@ -66,7 +67,7 @@ class Segment1Thread(QtCore.QThread):
             merge_small_labels
         )
 
-        input_image = img_as_ubyte(input_image)
+        input_image = img_as_ubyte(self.input_image)
         image_H = self.vahadane_transform(input_image)
         self.update_progress.emit(1)
 
@@ -95,7 +96,9 @@ class Segment1Thread(QtCore.QThread):
         self.update_progress.emit(10)
         labeled_nuclei = merge_small_labels(labeled_nuclei, **self.params['merge_small_labels'])
         self.update_progress.emit(11)
-        return nuclei, labeled_nuclei
+
+        self.nuclei = nuclei
+        self.labeled_nuclei = labeled_nuclei
 
 class SegmentationWindow(QMainWindow):
     def __init__(self, parent, img_fn) -> None:
@@ -219,7 +222,10 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Invalid operation", "Please select an image")
             return
 
-        segment_thread = Segment1Thread(self._segmentation_params, self)
+        segment_thread = Segment1Thread(
+            input_image=self._curr_img,
+            params=self._segmentation_params,
+            parent=self)
 
         segment_progress = QProgressDialog(self)
         segment_progress.setWindowTitle("Segmentation in progress...")
@@ -232,8 +238,7 @@ class MainWindow(QMainWindow):
         segment_thread.start()
         segment_progress.exec()
 
-        nuclei, labeled_nuclei = segmentation_pipeline(
-            input_image=self._curr_img, params=self._segmentation_params)
+        nuclei, labeled_nuclei = segment_thread.nuclei, segment_thread.labeled_nuclei
         self.CellCountTextEdit.setPlainText(str(len(set(labeled_nuclei.flat))))
         self.segmentation_window(nuclei=nuclei, labeled_nuclei=labeled_nuclei)
 
