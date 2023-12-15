@@ -56,7 +56,7 @@ python -m pip install notebook matplotlib
 ```
 7. Download model parameters from shared OneDrive [link](TBD). Then run the following command to tell Brachistools the location of the downloaded model parameters:
 ```sh
-python -m brachistools config --model_param_location FILE_FOLDER_CONTAINING_MODEL_PARAMS
+python -m brachistools config --param_dir FILE_FOLDER_CONTAINING_MODEL_PARAMS
 ```
 
 #### GPU version (CUDA) on Windows or Linux
@@ -79,5 +79,5 @@ After correct installation of `pytorch`, Brachistools will automatically recogni
 
 Get started by opening the GUI from a terminal:
 ```shell
-python -m cellpose --gui
+python -m cellpose gui
 ```
