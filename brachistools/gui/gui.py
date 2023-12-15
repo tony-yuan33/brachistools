@@ -1,6 +1,7 @@
 
-import typing
-import os
+import warnings
+import os, sys
+
 from PyQt6 import QtCore, QtGui
 from qtpy import QtGui, QtCore
 from qtpy.QtWidgets import (
@@ -25,6 +26,19 @@ from ..version import brachistools_version
 from ..segmentation import segmentation_pipeline, default_segmentation_params, label2rgb_bbox
 from ..classification import classification_pipeline
 
+global logger
+def run():
+    from ..io import logger_setup
+    global logger
+
+    logger, _ = logger_setup()
+    warnings.filterwarnings("ignore")
+
+    app = QApplication(sys.argv)
+    mainw = MainWindow()
+    mainw.show()
+    retv = app.exec()
+    sys.exit(retv)
 
 class SegmentationWindow(QMainWindow):
     def __init__(self, parent, img_fn) -> None:
