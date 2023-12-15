@@ -20,7 +20,7 @@ from qtpy.QtWidgets import (
     QWidget,
     QAction)
 
-from brachistools.gui.io import load_folder, imread
+from brachistools.gui.io import load_folder, imread, abbrev_path
 
 from brachistools.version import brachistools_version
 from brachistools.segmentation import segmentation_pipeline, default_segmentation_params, label2rgb_bbox
@@ -228,9 +228,10 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Invalid operation", "Input folder does not contain any PNG/JPG files")
         else:
             self._input_folder_path = folder_path
-            self.InputFolderLabel.setText(folder_path)
+            self.InputFolderLabel.setText(abbrev_path(folder_path))
             self._input_filenames = input_filenames
-            self.InputListViewModel.setStringList(self._input_filenames)
+            self.InputListViewModel.setStringList(
+                abbrev_path(fn) for fn in self._input_filenames)
 
     def keyPressEvent(self, event):
         modifiers = (event.modifiers() & (
