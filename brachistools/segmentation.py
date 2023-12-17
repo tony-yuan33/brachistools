@@ -37,8 +37,8 @@ def segmentation_pipeline(input_image, params):
 
     vahadane_transform = vahadane(**params['vahadane'])
 
-    if len(input_image.shape) < 3:
-        raise ValueError("Input image has only 2 channels")
+    if len(input_image.shape) < 3 or input_image.shape[-1] < 3:
+        raise ValueError("Input image has less than 3 channels")
 
     input_image = img_as_ubyte(input_image)
     image_H = vahadane_transform(input_image)
