@@ -192,10 +192,12 @@ def main():
         for seg_xml in image_names:
             try:
                 root_fn, old_ext = os.path.splitext(seg_xml)
+                if root_fn.endswith('_seg'):
+                    root_fn = root_fn[:-4]
 
                 tree = ET.parse(os.path.join(args.dir, seg_xml))
                 labels, pic = xml_to_labels(tree, use_tqdm=len(image_names)==1)
-                imsave(savepath(root_fn + '.PNG'), pic)
+                imsave(savepath(root_fn + '_xml2seg.PNG'), pic)
                 if args.save_npy:
                     np.save(savepath(root_fn + '_xml2seg.npy'), labels)
             except Exception as e:
