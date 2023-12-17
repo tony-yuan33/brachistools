@@ -1,6 +1,7 @@
 
 from tqdm import tqdm
 import numpy as np
+from skimage import img_as_ubyte
 
 import argparse
 from pathlib import Path
@@ -38,6 +39,9 @@ def get_arg_parser():
     input_img_args.add_argument('--dir', default=[], type=str, help='folder containing data to run on')
     input_img_args.add_argument('--image_path', default=[], type=str,
                                 help='run on single image')
+    input_img_args.add_argument('--ignored_suffixes', default=['_mask', '_xml2seg'],
+                                type=str, nargs='+', required=False,
+                                help='ignore file if its root name ends with these suffixes')
     output_args = common_parser.add_argument_group("Output Arguments")
     output_args.add_argument('--save_format', required=False, default='PNG', type=str,
                              help="the file extension (no dot) of saved binary masks. Default is 'PNG'")
@@ -162,7 +166,9 @@ def main():
         file_ext = ['PNG', 'JPG', 'JPEG']
 
     if args.dir:
-        image_names = load_folder(args.dir, file_ext=file_ext, absolute_path=False)
+        image_names = load_folder(args.dir,
+            file_ext=file_ext, absolute_path=False,
+            ignored_suffixes=args.ignored_suffixes)
         if len(image_names) > 1:
             image_names = tqdm(image_names)
     elif args.image_path:
@@ -184,13 +190,18 @@ def main():
         #     logger.info("Showing segmentation XMLs requires matplotlib. Saving picture only")
 
         for seg_xml in image_names:
-            root_fn, old_ext = os.path.splitext(seg_xml)
+            try:
+                root_fn, old_ext = os.path.splitext(seg_xml)
 
-            tree = ET.parse(os.path.join(args.dir, seg_xml))
-            labels, pic = xml_to_labels(tree, use_tqdm=len(image_names)>0)
-            imsave(savepath(root_fn + '.PNG'), pic)
-            if args.save_npy:
-                np.save(savepath(root_fn + '_xml2seg.npy'), labels)
+                tree = ET.parse(os.path.join(args.dir, seg_xml))
+                labels, pic = xml_to_labels(tree, use_tqdm=len(image_names)==1)
+                imsave(savepath(root_fn + '.PNG'), pic)
+                if args.save_npy:
+                    np.save(savepath(root_fn + '_xml2seg.npy'), labels)
+            except Exception as e:
+                logger.critical(
+                    "Failed to transform segmentation XML '{}' "
+                    "due to exception: {}", seg_xml, e)
 
     if args.command == 'segment':
         segment_params = default_segmentation_params.copy()
@@ -203,16 +214,21 @@ def main():
         segment_params['merge_small_labels:min_size'] = args.small_labels_min_size
 
         for fn in image_names:
-            image = imread(os.path.join(args.dir, fn))
-            nucleus, labeled_nucleus = segmentation_pipeline(image, segment_params)
+            try:
+                image = imread(os.path.join(args.dir, fn))
+                nucleus, labeled_nucleus = segmentation_pipeline(image, segment_params)
 
-            root, old_ext = os.path.splitext(fn)
-            imsave(savepath(f"{root}_mask.{args.save_format}"), nucleus)
-            labels_to_xml(labeled_nucleus).write(savepath(f"{root}_seg.xml"))
+                root, old_ext = os.path.splitext(fn)
+                imsave(savepath(f"{root}_mask.{args.save_format}"), img_as_ubyte(nucleus))
+                labels_to_xml(labeled_nucleus).write(savepath(f"{root}_seg.xml"))
 
-            if args.save_npy:
-                np.save(savepath(root + '_mask.npy'), nucleus)
-                np.save(savepath(root + '_mask_labels.npy'), labeled_nucleus)
+                if args.save_npy:
+                    np.save(savepath(root + '_mask.npy'), nucleus)
+                    np.save(savepath(root + '_mask_labels.npy'), labeled_nucleus)
+            except Exception as e:
+                logger.critical(
+                    "Failed to segmentation picture '{}' "
+                    "due to exception: {}", fn, e)
 
     if args.command == 'classify':
         ...

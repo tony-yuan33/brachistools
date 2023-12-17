@@ -49,24 +49,26 @@ def logger_setup():
 
     return logger, log_file
 
-def load_folder(path, file_ext, absolute_path = False) -> 'list[str]':
+def load_folder(path, file_ext, absolute_path = False, ignored_suffixes=['_mask', '_xml2seg']) -> 'list[str]':
     """Get all file names with specified extension(s) under a folder"""
-    from typing import Iterable
-
-    if isinstance(file_ext, Iterable):
-        file_ext = list(ext.lower() for ext in file_ext)
-    else:
+    if isinstance(file_ext, str):
         file_ext = [file_ext.lower()]
+    else:
+        file_ext = list(ext.lower() for ext in file_ext)
+
 
     files = os.listdir(path)
     def get_results():
         for file in files:
-            for ext in file_ext:
-                if file.lower().endswith(ext):
-                    if absolute_path:
-                        yield os.path.join(path, file)
-                    else:
-                        yield file
+            rootn, ext = os.path.splitext(file)
+
+            if (ext.lower().lstrip('.') in file_ext and
+                not any(rootn.endswith(suffix) for suffix in ignored_suffixes)
+            ):
+                if absolute_path:
+                    yield os.path.join(path, file)
+                else:
+                    yield file
 
     return natsorted(get_results())
 
