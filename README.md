@@ -46,6 +46,10 @@ or if you don't need a GUI:
 ```shell
 python -m pip install .
 ```
+5. Download model parameters from shared OneDrive [link](TBD). Then run the following command to tell Brachistools the location of the downloaded model parameters:
+```sh
+python -m brachistools config --param_dir FILE_FOLDER_CONTAINING_MODEL_PARAMS
+```
 
 #### Install via Miniconda (NOT YET SUPPORTED!)
 
