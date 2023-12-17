@@ -27,7 +27,30 @@ Brachistools depends on the following packages:
 
 Brachistools uses PyTorch, a deep-learning framework, to implement its algorithms. By default, Brachistools runs on CPU, but you can use a GPU with CUDA to accelerate the computations. See [below](README.md#gpu-version-cuda-on-windows-or-linux) for instructions on configuring your device's CUDA and installing the GPU version of Brachistools.
 
-#### Install via Miniconda
+#### `git clone` and install locally
+
+1. Open your terminal. `cd` to a directory for cloning the repo
+2. Clone the repo:
+```shell
+git clone https://github.com/tony-yuan33/brachistools.git
+```
+3. `cd` into the repo:
+```shell
+cd brachistools
+```
+4. Install from source with `pip`:
+```shell
+python -m pip install .[gui]
+```
+or if you don't need a GUI:
+```shell
+python -m pip install .
+```
+
+#### Install via Miniconda (NOT YET SUPPORTED!)
+
+The following will be supported soon.
+
 1. Install a [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/) distribution of Python.
 2. Create a new environment for Brachistools (Python 3.8 is required although later versions might be OK):
 ```sh
@@ -79,5 +102,35 @@ After correct installation of `pytorch`, Brachistools will automatically recogni
 
 Get started by opening the GUI from a terminal:
 ```shell
-python -m cellpose gui
+python -m brachistools gui
+```
+
+For batch processes, you can directly use the command line version. See help:
+```shell
+python -m brachistools --help
+```
+
+Segment and save numpy arrays for binary mask and labels:
+```shell
+python -m brachistools segment --dir ... --save_dir ... --save_npy
+```
+
+Obtain suggested diagnosis using the deep learning model:
+```shell
+python -m brachistools classify --dir ... --save_dir ...
+```
+
+Convert output XML annotation of instance segmentation with:
+```shell
+python -m brachistools show --dir ... --save_dir ... --save_npy
+```
+
+Configure the directory for deep learning model parameters (default is PACKAGE_PATH/models):
+```shell
+python -m brachistools config --param_dir ...
+```
+
+See help for specific subcommands with:
+```shell
+python -m brachistools segment --help
 ```

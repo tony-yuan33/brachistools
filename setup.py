@@ -91,7 +91,7 @@ setup(
     description="breast cancer histological image segmentation and classification algorithm",
     long_description=long_description,
     long_description_content_type='text/markdown',
-    # url="https://github.com/TBD/brachistools",
+    url="https://github.com/tony-yuan33/brachistools",
     setup_requires=[
         'pytest-runner',
         'setuptools_scm',
