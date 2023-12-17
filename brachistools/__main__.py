@@ -32,21 +32,30 @@ def get_arg_parser():
     parser = argparse.ArgumentParser(description="Brachistools Command Line Parameters")
     parser.add_argument('--verbose', action='store_true', help="print additional messages")
 
-    parser.add_argument('command', type=str, choices=['segment', 'classify', 'show', 'config', 'gui', 'version'])
 
-    subparsers = parser.add_subparsers(dest='command')
-
-    segment_subparser = subparsers.add_parser('segment', help="Perform segmentation")
-    classify_subparser = subparsers.add_parser('classify', help="Perform classification (suggest diagnosis)")
-    config_subparser = subparsers.add_parser('config', help="Edit program configurations")
-    show_subparser = subparsers.add_parser('show', help="Generate labels for segmentation XML")
-    gui_subparser = subparsers.add_parser('gui', help="Launch GUI application")
-    version_subparser = subparsers.add_parser('version', help="Show version info")
-
-    input_img_args = parser.add_argument_group("Input Image Arguments")
+    common_parser = argparse.ArgumentParser(add_help=False)
+    input_img_args = common_parser.add_argument_group("Input Image Arguments")
     input_img_args.add_argument('--dir', default=[], type=str, help='folder containing data to run on')
     input_img_args.add_argument('--image_path', default=[], type=str,
                                 help='run on single image')
+    output_args = common_parser.add_argument_group("Output Arguments")
+    output_args.add_argument('--save_format', required=False, default='PNG', type=str,
+                             help="the file extension (no dot) of saved binary masks. Default is 'PNG'")
+    output_args.add_argument('--save_dir', default=None, type=str,
+                             help="folder to which segmentation results will be saved (defaults to input image directory)")
+    output_args.add_argument('--save_npy', action='store_true',
+                             help="save instance segmentation results as '.npy' labeled mask arrays. "
+                             "For instance segmentation, the XML format will always be saved regardless of "
+                             "this option")
+
+    subparsers = parser.add_subparsers(dest='command')
+
+    segment_subparser = subparsers.add_parser('segment', parents=[common_parser], help="Perform segmentation")
+    classify_subparser = subparsers.add_parser('classify', parents=[common_parser], help="Perform classification (suggest diagnosis)")
+    config_subparser = subparsers.add_parser('config', help="Edit program configurations")
+    show_subparser = subparsers.add_parser('show', parents=[common_parser], help="Generate labels for segmentation XML")
+    gui_subparser = subparsers.add_parser('gui', help="Launch GUI application")
+    version_subparser = subparsers.add_parser('version', help="Show version info")
 
     segmentation_args = segment_subparser.add_argument_group("Segmentation Pipeline Arguments")
     segmentation_args.add_argument('--vahadane-sparsity_regularizer',
@@ -96,15 +105,6 @@ def get_arg_parser():
     config_subparser.add_argument('--param_dir', required=False, default='models', type=str,
                                   help="folder of model parameters")
 
-    output_args = parser.add_argument_group("Output Arguments")
-    output_args.add_argument('--save_format', required=False, default='PNG', type=str,
-                             help="the file extension (no dot) of saved binary masks. Default is 'PNG'")
-    output_args.add_argument('--save_dir', default=None, type=str,
-                             help="folder to which segmentation results will be saved (defaults to input image directory)")
-    output_args.add_argument('--save_npy', action='store_true',
-                             help="save instance segmentation results as '.npy' labeled mask arrays. "
-                             "The XML format for instance segmentation will always be saved regardless of "
-                             "this option")
     return parser
 
 def main():
