@@ -72,11 +72,18 @@ def load_folder(path, file_ext, absolute_path = False) -> 'list[str]':
 
 def labels_to_xml(labels, bg_label=0) -> ET.ElementTree:
     from skimage.measure import find_contours
+
     root = ET.Element("Annotation", Width=str(labels.shape[1]), Height=str(labels.shape[0]))
     regions_elem = ET.SubElement(root, "Regions")
 
     label_names = set(labels.flat)
     label_names.remove(bg_label)
+
+    # Remove edges to maximize closing of contours
+    labels[0, :] = bg_label
+    labels[labels.shape[0]-1, :] = bg_label
+    labels[:, 0] = bg_label
+    labels[:, labels.shape[1]-1] = bg_label
 
     for label in label_names:
         region_mask = (labels == label)
@@ -88,8 +95,6 @@ def labels_to_xml(labels, bg_label=0) -> ET.ElementTree:
 
         region_elem = ET.SubElement(regions_elem, "Region", Label=str(label))
         for i, contour in enumerate(contours):
-            (rmin, cmin), (rmax, cmax) = np.min(contour, axis=0), np.max(contour, axis=0)
-
             if i == 0:
                 contour_id = str(label)
             else:
@@ -99,6 +104,7 @@ def labels_to_xml(labels, bg_label=0) -> ET.ElementTree:
             for y, x in contour:
                 ET.SubElement(vertices_elem, "Vertex", X=str(x), Y=str(y))
 
+            (rmin, cmin), (rmax, cmax) = np.min(contour, axis=0), np.max(contour, axis=0)
             bbox_elem = ET.SubElement(
                 region_elem, "BoundingBox",
                 X=str(cmin), Y=str(rmin),
