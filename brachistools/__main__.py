@@ -4,6 +4,7 @@ import numpy as np
 
 import argparse
 from pathlib import Path
+import xml.etree.ElementTree as ET
 import os, sys
 
 try:
@@ -24,14 +25,14 @@ import logging
 from brachistools.segmentation import segmentation_pipeline, default_segmentation_params
 # TODO: Import components
 # from brachistools.classification import ...
-from brachistools.io import load_folder, imread, imsave, labels_to_xml
+from brachistools.io import load_folder, imread, imsave, labels_to_xml, xml_to_pic
 from brachistools.version import version_str
 
 def get_arg_parser():
     parser = argparse.ArgumentParser(description="Brachistools Command Line Parameters")
     parser.add_argument('--verbose', action='store_true', help="print additional messages")
 
-    parser.add_argument('command', type=str, choices=['segment', 'classify', 'config', 'gui', 'version'])
+    parser.add_argument('command', type=str, choices=['segment', 'classify', 'show', 'config', 'gui', 'version'])
 
     subparsers = parser.add_subparsers(dest='command')
 
@@ -126,6 +127,7 @@ def main():
             if GUI_IMPORT:
                 print('GUI FAILED: GUI dependencies may not be installed, to install, run')
                 print('     pip install "brachistools[gui]"')
+            sys.exit(-1)
         else:
             gui.run()
 
@@ -151,8 +153,13 @@ def main():
         logger.critical("Cannot specify both --dir and --image_path")
         sys.exit(-1)
 
+    if args.command == 'show':
+        file_ext = 'XML'
+    else:
+        file_ext = ['PNG', 'JPG', 'JPEG']
+
     if args.dir:
-        image_names = load_folder(args.dir, file_ext=['PNG', 'JPG', 'JPEG'], absolute_path=True)
+        image_names = load_folder(args.dir, file_ext=file_ext, absolute_path=False)
         if len(image_names) > 1:
             image_names = tqdm(image_names)
     elif args.image_path:
@@ -165,6 +172,21 @@ def main():
     if not args.save_dir:
         args.save_dir = args.dir
 
+    def savepath(fn):
+        return os.path.join(args.save_dir, fn)
+
+    if args.command == 'show':
+        # from brachistools.io import HAVE_MATPLOTLIB
+        # if not HAVE_MATPLOTLIB:
+        #     logger.info("Showing segmentation XMLs requires matplotlib. Saving picture only")
+
+        for seg_xml in image_names:
+            root_fn, old_ext = os.path.splitext(seg_xml)
+
+            tree = ET.parse(os.path.join(args.dir, seg_xml))
+            pic = xml_to_pic(tree)
+            imsave(savepath(root_fn + '.PNG'), pic)
+
     if args.command == 'segment':
         segment_params = default_segmentation_params.copy()
         segment_params['vahadane:sparsity_regularizer'] = args.vahadane_sparsity_regularizer
@@ -176,16 +198,16 @@ def main():
         segment_params['merge_small_labels:min_size'] = args.small_labels_min_size
 
         for fn in image_names:
-            image = imread(fn)
+            image = imread(os.path.join(args.dir, fn))
             nucleus, labeled_nucleus = segmentation_pipeline(image, segment_params)
 
             root, old_ext = os.path.splitext(fn)
-            imsave(f"{root}_mask.{args.save_format}", nucleus)
-            labels_to_xml(labeled_nucleus).write(f"{root}_seg.xml")
+            imsave(savepath(f"{root}_mask.{args.save_format}"), nucleus)
+            labels_to_xml(labeled_nucleus).write(savepath(f"{root}_seg.xml"))
 
             if args.save_npy:
-                np.save(root + '_mask.npy', nucleus)
-                np.save(root + '_mask_labels.npy', labeled_nucleus)
+                np.save(savepath(root + '_mask.npy'), nucleus)
+                np.save(savepath(root + '_mask_labels.npy'), labeled_nucleus)
 
     if args.command == 'classify':
         ...
