@@ -37,6 +37,9 @@ def segmentation_pipeline(input_image, params):
 
     vahadane_transform = vahadane(**params['vahadane'])
 
+    if len(input_image.shape) < 3:
+        raise ValueError("Input image has only 2 channels")
+
     input_image = img_as_ubyte(input_image)
     image_H = vahadane_transform(input_image)
     image_H = equalize_adapthist(image_H, **params['equalize_adapthist'])
