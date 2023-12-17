@@ -11,6 +11,7 @@ from skimage.io import imread, imsave
 import numpy as np
 
 from .version import version_str
+from .transforms import get_hue_colors
 
 try:
     from qtpy.QtWidgets import QMessageBox
@@ -71,7 +72,8 @@ def load_folder(path, file_ext, absolute_path = False) -> 'list[str]':
 
 def labels_to_xml(labels) -> ET.ElementTree:
     from skimage.measure import find_contours
-    root = ET.Element("Regions")
+    root = ET.Element("Annotation", Width=str(labels.shape[1]), Height=str(labels.shape[0]))
+    regions_elem = ET.SubElement(root, "Regions")
 
     for label in set(labels.flat):
         region_mask = (labels == label)
@@ -80,14 +82,14 @@ def labels_to_xml(labels) -> ET.ElementTree:
         contours = find_contours(region_mask, fully_connected='high')
 
         for i, contour in enumerate(contours):
-            rmin, cmin, rmax, cmax = np.min(contour, axis=0), np.max(contour, axis=0)
+            (rmin, cmin), (rmax, cmax) = np.min(contour, axis=0), np.max(contour, axis=0)
 
             if i == 0:
                 region_id = str(label)
-            else:  # very unlikely to have multiple regions for the same symbol
+            else:
                 region_id = f"{label}_{i}"
 
-            region_elem = ET.SubElement(root, "Region", Id=region_id, Label=label)
+            region_elem = ET.SubElement(regions_elem, "Region", Id=region_id, Label=str(label))
             vertices_elem = ET.SubElement(region_elem, "Vertices")
             for y, x in contour:
                 ET.SubElement(vertices_elem, "Vertex", X=str(x), Y=str(y))
@@ -98,6 +100,39 @@ def labels_to_xml(labels) -> ET.ElementTree:
 
     tree = ET.ElementTree(root)
     return tree
+
+def xml_to_pic(tree: ET.ElementTree):
+    from skimage.draw import polygon, polygon2mask
+
+    root = tree.getroot()
+    width, height = int(root.attrib['Width']), int(root.attrib['Height'])
+
+    regions = root.findall('Regions/Region')
+    im = np.zeros(shape=(height, width, 3)) # Prepare RGB
+    colors = get_hue_colors(len(regions))
+    for region, color in zip(regions, colors):
+        rows = []
+        cols = []
+        for point in region.findall('Vertices/Vertex'):
+            rows.append(float(point.attrib['Y']))
+            cols.append(float(point.attrib['X']))
+
+        ridx, cidx = polygon(rows, cols, shape=(height, width))
+        # Draw polygon with the color
+        im[ridx, cidx, :] = color
+
+        # Draw bbox
+        bbox = region.find('BoundingBox')
+        min_y, min_x = float(bbox.attrib['Y']), float(bbox.attrib['X'])
+        y_ext, x_ext = float(bbox.attrib['Height']), float(bbox.attrib['Width'])
+        min_y, min_x, y_ext, x_ext = int(min_y), int(min_x), int(y_ext), int(x_ext)
+        max_y, max_x = min_y + y_ext + 1, min_x + x_ext + 1
+        im[min_y:max_y, min_x, :] = color
+        im[min_y:max_y, max_x-1, :] = color
+        im[min_y, min_x:max_x, :] = color
+        im[max_y-1, min_x:max_x, :] = color
+
+    return (im * 255).astype(np.uint8)
 
 # def xml_to_mask(filename):
 #     pass
