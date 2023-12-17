@@ -140,9 +140,10 @@ class SegmentationWindow(QMainWindow):
         self.l0.addWidget(self.SaveButton, 1, 2, QtCore.Qt.AlignmentFlag.AlignRight)
 
     def save_masks(self):
+        from skimage import img_as_ubyte
         root, old_ext = os.path.splitext(self._img_fn)
         save_dir = QFileDialog.getExistingDirectory(self, "Select save directory")
-        imsave(os.path.join(save_dir, f"{root}_mask.PNG"), self._binary_mask)
+        imsave(os.path.join(save_dir, f"{root}_mask.PNG"), img_as_ubyte(self._binary_mask))
         labels_to_xml(self._instance_seg).write(
             os.path.join(save_dir, f"{root}_seg.xml"))
         QMessageBox.information(self, "Masks saved", "You have saved the binary mask and nuclei regions.")
