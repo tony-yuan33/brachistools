@@ -113,7 +113,7 @@ def labels_to_xml(labels, bg_label=0) -> ET.ElementTree:
     tree = ET.ElementTree(root)
     return tree
 
-def xml_to_pic(tree: ET.ElementTree, use_tqdm=False):
+def xml_to_labels(tree: ET.ElementTree, use_tqdm=False):
     from tqdm import tqdm
     from skimage.draw import polygon, polygon2mask
 
@@ -122,13 +122,14 @@ def xml_to_pic(tree: ET.ElementTree, use_tqdm=False):
 
     regions = root.findall('Regions/Region')
     im = np.zeros(shape=(height, width, 3)) # Prepare RGB
+    labels = np.zeros(shape=(height, width), dtype=int)
     colors = get_hue_colors(len(regions))
     np.random.shuffle(colors)
 
-    loopvar = zip(regions, colors)
+    loopvar = enumerate(zip(regions, colors))
     if use_tqdm:
         loopvar = tqdm(loopvar, desc="Drawing regions", total=len(regions))
-    for region, color in loopvar:
+    for i, (region, color) in loopvar:
         rows = []
         cols = []
         for point in region.findall('Vertices/Vertex'):
@@ -137,7 +138,8 @@ def xml_to_pic(tree: ET.ElementTree, use_tqdm=False):
 
         ridx, cidx = polygon(rows, cols, shape=(height, width))
         # Draw polygon with the color
-        im[ridx, cidx, :] = color
+        im[ridx, cidx] = color
+        labels[ridx, cidx] = i + 1
 
         # Draw bbox
         bbox = region.find('BoundingBox')
@@ -145,12 +147,17 @@ def xml_to_pic(tree: ET.ElementTree, use_tqdm=False):
         y_ext, x_ext = float(bbox.attrib['Height']), float(bbox.attrib['Width'])
         min_y, min_x, y_ext, x_ext = int(min_y), int(min_x), int(y_ext), int(x_ext)
         max_y, max_x = min_y + y_ext + 1, min_x + x_ext + 1
-        im[min_y:max_y, min_x, :] = color
-        im[min_y:max_y, max_x-1, :] = color
-        im[min_y, min_x:max_x, :] = color
-        im[max_y-1, min_x:max_x, :] = color
+        im[min_y:max_y, min_x] = color
+        im[min_y:max_y, max_x-1] = color
+        im[min_y, min_x:max_x] = color
+        im[max_y-1, min_x:max_x] = color
 
-    return (im * 255).astype(np.uint8)
+        labels[min_y:max_y, min_x] = i + 1
+        labels[min_y:max_y, max_x-1] = i + 1
+        labels[min_y, min_x:max_x] = i + 1
+        labels[max_y-1, min_x:max_x] = i + 1
+
+    return labels, (im * 255).astype(np.uint8)
 
 # def xml_to_mask(filename):
 #     pass

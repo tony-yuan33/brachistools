@@ -25,7 +25,7 @@ import logging
 from brachistools.segmentation import segmentation_pipeline, default_segmentation_params
 # TODO: Import components
 # from brachistools.classification import ...
-from brachistools.io import load_folder, imread, imsave, labels_to_xml, xml_to_pic
+from brachistools.io import load_folder, imread, imsave, labels_to_xml, xml_to_labels
 from brachistools.version import version_str
 
 def get_arg_parser():
@@ -36,9 +36,12 @@ def get_arg_parser():
 
     subparsers = parser.add_subparsers(dest='command')
 
-    segment_subparser = subparsers.add_parser('segment', help="perform segmentation")
-    classify_subparser = subparsers.add_parser('classify', help="perform classification (suggest diagnosis)")
-    config_subparser = subparsers.add_parser('config', help="program configurations")
+    segment_subparser = subparsers.add_parser('segment', help="Perform segmentation")
+    classify_subparser = subparsers.add_parser('classify', help="Perform classification (suggest diagnosis)")
+    config_subparser = subparsers.add_parser('config', help="Edit program configurations")
+    show_subparser = subparsers.add_parser('show', help="Generate labels for segmentation XML")
+    gui_subparser = subparsers.add_parser('gui', help="Launch GUI application")
+    version_subparser = subparsers.add_parser('version', help="Show version info")
 
     input_img_args = parser.add_argument_group("Input Image Arguments")
     input_img_args.add_argument('--dir', default=[], type=str, help='folder containing data to run on')
@@ -184,8 +187,10 @@ def main():
             root_fn, old_ext = os.path.splitext(seg_xml)
 
             tree = ET.parse(os.path.join(args.dir, seg_xml))
-            pic = xml_to_pic(tree, use_tqdm=len(image_names)>0)
+            labels, pic = xml_to_labels(tree, use_tqdm=len(image_names)>0)
             imsave(savepath(root_fn + '.PNG'), pic)
+            if args.save_npy:
+                np.save(savepath(root_fn + '_xml2seg.npy'), labels)
 
     if args.command == 'segment':
         segment_params = default_segmentation_params.copy()
