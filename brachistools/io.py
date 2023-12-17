@@ -79,20 +79,23 @@ def labels_to_xml(labels) -> ET.ElementTree:
         region_mask = (labels == label)
 
         # Find contour points to write as a polygon
-        contours = find_contours(region_mask, fully_connected='high')
+        contours = find_contours(region_mask, level=0.5, fully_connected='low')
+        if len(contours) == 0:
+            continue
 
+        region_elem = ET.SubElement(regions_elem, "Region", Label=str(label))
         for i, contour in enumerate(contours):
             (rmin, cmin), (rmax, cmax) = np.min(contour, axis=0), np.max(contour, axis=0)
 
             if i == 0:
-                region_id = str(label)
+                contour_id = str(label)
             else:
-                region_id = f"{label}_{i}"
+                contour_id = f"{label}_{i}"
 
-            region_elem = ET.SubElement(regions_elem, "Region", Id=region_id, Label=str(label))
-            vertices_elem = ET.SubElement(region_elem, "Vertices")
+            vertices_elem = ET.SubElement(region_elem, "Vertices", Id=contour_id)
             for y, x in contour:
                 ET.SubElement(vertices_elem, "Vertex", X=str(x), Y=str(y))
+
             bbox_elem = ET.SubElement(
                 region_elem, "BoundingBox",
                 X=str(cmin), Y=str(rmin),
@@ -101,7 +104,8 @@ def labels_to_xml(labels) -> ET.ElementTree:
     tree = ET.ElementTree(root)
     return tree
 
-def xml_to_pic(tree: ET.ElementTree):
+def xml_to_pic(tree: ET.ElementTree, use_tqdm=False):
+    from tqdm import tqdm
     from skimage.draw import polygon, polygon2mask
 
     root = tree.getroot()
@@ -110,7 +114,12 @@ def xml_to_pic(tree: ET.ElementTree):
     regions = root.findall('Regions/Region')
     im = np.zeros(shape=(height, width, 3)) # Prepare RGB
     colors = get_hue_colors(len(regions))
-    for region, color in zip(regions, colors):
+    np.random.shuffle(colors)
+
+    loopvar = zip(regions, colors)
+    if use_tqdm:
+        loopvar = tqdm(loopvar, desc="Drawing regions", total=len(regions))
+    for region, color in loopvar:
         rows = []
         cols = []
         for point in region.findall('Vertices/Vertex'):
