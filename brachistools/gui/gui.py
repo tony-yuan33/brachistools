@@ -254,7 +254,9 @@ class MainWindow(QMainWindow):
         segment_progress.exec()
 
         nuclei, labeled_nuclei = segment_thread.nuclei, segment_thread.labeled_nuclei
-        self.CellCountTextEdit.setPlainText(str(len(set(labeled_nuclei.flat))))
+        label_names = set(labeled_nuclei.flat)
+        label_names.discard(0)
+        self.CellCountTextEdit.setPlainText(str(len(label_names)))
         self.segmentation_window(nuclei=nuclei, labeled_nuclei=labeled_nuclei)
 
     def classify_current(self):
