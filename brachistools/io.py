@@ -70,12 +70,15 @@ def load_folder(path, file_ext, absolute_path = False) -> 'list[str]':
 
     return natsorted(get_results())
 
-def labels_to_xml(labels) -> ET.ElementTree:
+def labels_to_xml(labels, bg_label=0) -> ET.ElementTree:
     from skimage.measure import find_contours
     root = ET.Element("Annotation", Width=str(labels.shape[1]), Height=str(labels.shape[0]))
     regions_elem = ET.SubElement(root, "Regions")
 
-    for label in set(labels.flat):
+    label_names = set(labels.flat)
+    label_names.remove(bg_label)
+
+    for label in label_names:
         region_mask = (labels == label)
 
         # Find contour points to write as a polygon
