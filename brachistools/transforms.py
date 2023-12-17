@@ -1,6 +1,6 @@
 
 import os
-
+from skimage.color import hsv2rgb
 import numpy as np
 
 
@@ -113,3 +113,29 @@ def inverted_gray_scale(image):
     image_gray_inverted = 1 - image_gray
     image_gray_inverted = img_as_ubyte(image_gray_inverted)
     return image_gray_inverted
+
+def get_hue_colors(n, saturation=1.0, value=1.0):
+    hue_panel = np.linspace(0, 1, n)
+
+    result = []
+    for hue in hue_panel:
+        # hi = np.floor(hue * 6)
+        # f = hue * 6 - hi
+        # p = value * (1 - saturation)
+        # q = value * (1 - f * saturation)
+        # t = value * (1 - (1-f) * saturation)
+        # v = value
+
+        # hi = np.array([hi, hi, hi], dtype=np.uint8) % 6
+        # out = np.choose(
+        #     hi, np.array([
+        #         [v, t, p],
+        #         [q, v, p],
+        #         [p, v, t],
+        #         [p, q, v],
+        #         [t, p, v],
+        #         [v, p, q]]))
+        out = hsv2rgb(np.array([hue, saturation, value]).reshape(1, 1, 3))
+        result.append(out)
+
+    return result
