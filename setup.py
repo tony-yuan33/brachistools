@@ -17,6 +17,8 @@ install_deps = [
     'tensorflow',
     # 'torch>=1.6',
     'tqdm',
+    'keras',
+    'opencv-python',
     # 'opencv-python-headless',
     # 'fastremap',
     # 'imagecodecs',
