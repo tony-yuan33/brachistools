@@ -22,11 +22,12 @@ from qtpy.QtWidgets import (
     QWidget,
     QAction)
 
-from brachistools.gui.io import load_folder, imread, abbrev_path
+from brachistools.gui.io import load_folder, imread, imsave, abbrev_path
 
 from brachistools.version import brachistools_version
 from brachistools.segmentation import segmentation_pipeline, default_segmentation_params, label2rgb_bbox
 from brachistools.classification import classification_pipeline
+from brachistools.io import labels_to_xml
 
 global logger
 def run():
@@ -104,7 +105,7 @@ class SegmentationWindow(QMainWindow):
     def __init__(self, parent, img_fn) -> None:
         super().__init__(parent)
 
-        self.setGeometry(50, 50, 1500, 500)
+        self.setGeometry(50, 50, 1500, 550)
         self.setWindowTitle("Segmentation results of " + img_fn)
 
         self.cwidget = QWidget(self)
@@ -116,9 +117,11 @@ class SegmentationWindow(QMainWindow):
         self.OrigImgLabel = QLabel()
         self.InstanceSegLabel = QLabel()
         self.BinaryMaskLabel = QLabel()
+        self.SaveButton = QPushButton('Save masks')
 
         self._init_ui_components()
 
+        self._img_fn = img_fn
         self._orig_img = None
         self._binary_mask = None
         self._instance_seg = None
@@ -132,6 +135,17 @@ class SegmentationWindow(QMainWindow):
 
         self.BinaryMaskLabel.setFixedSize(500, 500)
         self.l0.addWidget(self.BinaryMaskLabel, 0, 2)
+
+        self.SaveButton.clicked.connect(self.save_masks)
+        self.l0.addWidget(self.SaveButton, 1, 2, QtCore.Qt.AlignmentFlag.AlignRight)
+
+    def save_masks(self):
+        root, old_ext = os.path.splitext(self._img_fn)
+        save_dir = QFileDialog.getExistingDirectory(self, "Select save directory")
+        imsave(os.path.join(save_dir, f"{root}_mask.PNG"), self._binary_mask)
+        labels_to_xml(self._instance_seg).write(
+            os.path.join(save_dir, f"{root}_seg.xml"))
+        QMessageBox.information(self, "Masks saved", "You have saved the binary mask and nuclei regions.")
 
     def _set_img_for_label(self, lab: QLabel, imarr):
         from skimage import img_as_ubyte
@@ -228,7 +242,8 @@ class MainWindow(QMainWindow):
             parent=self)
 
         segment_progress = QProgressDialog(self)
-        segment_progress.setWindowTitle("Segmentation in progress...")
+        segment_progress.setFixedSize(300, 150)
+        segment_progress.setWindowTitle("Segmentation in progress")
         segment_progress.setLabelText("Please wait")
         segment_progress.setRange(0, Segment1Thread.MAX_PROGRESS)
         segment_progress.setModal(True)
