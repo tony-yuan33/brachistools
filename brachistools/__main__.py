@@ -184,7 +184,7 @@ def main():
             root_fn, old_ext = os.path.splitext(seg_xml)
 
             tree = ET.parse(os.path.join(args.dir, seg_xml))
-            pic = xml_to_pic(tree)
+            pic = xml_to_pic(tree, use_tqdm=len(image_names)>0)
             imsave(savepath(root_fn + '.PNG'), pic)
 
     if args.command == 'segment':
