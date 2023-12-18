@@ -1,5 +1,3 @@
-from turtle import pd
-
 from keras.preprocessing.image import ImageDataGenerator
 import Process.data_processing as pro
 import network
@@ -16,12 +14,6 @@ def train(aug, model, x_train, y_train, x_validation, y_validation):
     history = model.fit(aug.flow(x_train, y_train, batch_size=batch_size),
                         validation_data=(x_validation, y_validation), steps_per_epoch=len(x_train) // batch_size,
                         callbacks=cbs, epochs=epochs, verbose=1)
-
-    history_df = pd.DataFrame(history.history)
-    history_df[['loss', 'val_loss']].plot()
-
-    history_df = pd.DataFrame(history.history)
-    history_df[['accuracy', 'val_accuracy']].plot()
 
 
 if __name__ == "__main__":
