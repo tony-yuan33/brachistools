@@ -1,5 +1,9 @@
-# ResNet50 model set up reference: https://blog.csdn.net/sinom21/article/details/128126163
+"""
+The ResNet50 model set up reference:
+https://blog.csdn.net/sinom21/article/details/128126163
 
+Adapted by LI Wenjun
+""" 
 
 from keras import layers
 from keras.layers import Input, Activation, BatchNormalization, Flatten
