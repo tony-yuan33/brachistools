@@ -233,7 +233,10 @@ def main():
                     "due to exception: {}", fn, e)
 
     if args.command == 'classify':
-        ...
+        for fn in image_names:
+            image = imread(fn)
+            predict_class, confidence_score = classification_pipeline(image)
+            print(f"Predict : {predict_class}\nConfidence : {confidence_score}")
 
 if __name__ == "__main__":
     main()
