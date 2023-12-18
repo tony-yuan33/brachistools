@@ -101,6 +101,30 @@ class Segment1Thread(QtCore.QThread):
         self.nuclei = nuclei
         self.labeled_nuclei = labeled_nuclei
 
+class Classify1Thread(QtCore.QThread):
+    MAX_PROGRESS = 11
+
+    update_progress = QtCore.Signal(int)
+
+    def __init__(self, input_image, parent=None):
+        super().__init__(parent)
+
+        self.input_image = input_image
+
+
+    def run(self):
+        import cv2
+        import numpy as np
+        from brachistools.classification import (
+            classification_pipeline
+        )
+
+        img = cv2.resize(self.input_image, (224, 224))
+        img = np.array(img)
+        predict_class, confidence_score = classification_pipeline(img)
+        self.predict_class = predict_class
+        self.confidence_score = confidence_score
+
 class SegmentationWindow(QMainWindow):
     def __init__(self, parent, img_fn) -> None:
         super().__init__(parent)
@@ -261,7 +285,28 @@ class MainWindow(QMainWindow):
         self.segmentation_window(nuclei=nuclei, labeled_nuclei=labeled_nuclei)
 
     def classify_current(self):
-        ...
+        if self._curr_img is None:
+            QMessageBox.critical(self, "Invalid operation", "Please select an image")
+            return
+
+        classify_thread = Classify1Thread(
+            input_image=self._curr_img,
+            parent=self
+        )
+
+        classify_progress = QProgressDialog(self)
+        classify_progress.setWindowTitle("Classification in progress...")
+        classify_progress.setLabelText("Please wait")
+        classify_progress.setRange(0, Classify1Thread.MAX_PROGRESS)
+        classify_progress.setModal(True)
+        classify_progress.canceled.connect(classify_thread.quit)
+        classify_thread.finished.connect(classify_progress.accept)
+        classify_thread.update_progress.connect(classify_progress.setValue)
+        classify_thread.start()
+        classify_progress.exec()
+
+        predict_class, confidence_score = classify_thread.predict_class, classify_thread.confidence_score
+        self.DiagnosisTextEdit.setPlainText(f"Predict : {predict_class}\nConfidence : {confidence_score}")
 
     def segment_all(self):
         QMessageBox.critical(self, "Not supported", "Sorry, this option is under development")
