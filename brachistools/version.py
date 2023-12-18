@@ -7,7 +7,7 @@ Adapted by: YUAN Ruihong
 from importlib.metadata import PackageNotFoundError, version
 import sys
 from platform import python_version
-import torch
+import tensorflow
 
 try:
     brachistools_version = version("brachistools")
@@ -18,4 +18,4 @@ version_str = f"""
 brachistools version:\t{brachistools_version}
 platform:           \t{sys.platform}
 python version:     \t{python_version()}
-torch version:      \t{torch.__version__}"""
+tensorflow version:      \t{tensorflow.__version__}"""
