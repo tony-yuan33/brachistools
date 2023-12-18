@@ -1,5 +1,5 @@
 """
-Copright © 2023 Howard Hughes Medical Institute
+Copyright © 2023 Howard Hughes Medical Institute
 
 Adapted by: YUAN Ruihong
 """
@@ -21,13 +21,17 @@ install_deps = [
     # 'fastremap',
     # 'imagecodecs',
     'keras',
-    'opencv-python'
+    # 'opencv-python'
 ]
 
 gui_deps = [
     'pyqt6',
     'pyqt6.sip',
     'qtpy'
+]
+
+train_deps = [
+    'opencv-python',
 ]
 
 # docs_deps = [
@@ -42,14 +46,14 @@ if sys.platform.startswith('win'):
 else:
     install_deps.append('spams')
 
-try:
-    import torch
-    a = torch.ones(2, 3)
-    maj_ver, min_ver, _ = torch.__version__.split('.')
-    if maj_ver == '2' or int(min_ver) >= 6:
-        install_deps.remove('torch>=1.6')
-except:
-    pass
+# try:
+#     import torch
+#     a = torch.ones(2, 3)
+#     maj_ver, min_ver, _ = torch.__version__.split('.')
+#     if maj_ver == '2' or int(min_ver) >= 6:
+#         install_deps.remove('torch>=1.6')
+# except:
+#     pass
 
 try:
     import PyQt5
@@ -108,6 +112,7 @@ setup(
     extras_require = {
         # 'doc': docs_deps,
         'gui': gui_deps,
+        'train': train_deps,
     },
     include_package_data=True,
     classifiers=(

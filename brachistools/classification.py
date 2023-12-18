@@ -1,6 +1,7 @@
 from keras.models import load_model
 import numpy as np
-import cv2
+import skimage.transform
+import skimage.io
 from pathlib import Path
 from configparser import ConfigParser
 import sys, os
@@ -21,9 +22,16 @@ def classification_pipeline(input_image):
     param_dir = config.get('ModelParams', 'param_dir').strip('\"\'')
     model = load_model(os.path.join(param_dir, 'model.h5'))
     classes = ['benign', 'malignant']
-    input_image = cv2.resize(input_image, (224, 224))
-    img = np.array(input_image)
-    predict_results = model.predict(np.expand_dims(img, axis=0), verbose=0)
+
+    # In training, `cv2.resize` is used
+    # `skimage` resize has slightly different output but does not
+    # affect the output significantly
+    # Using skimage only would allow us to drop the requirement on
+    # opencv-python
+    im = skimage.transform.resize(input_image, (224, 224),
+        preserve_range=True, anti_aliasing=False).astype(np.uint8)
+    predict_results = model.predict(np.expand_dims(im, axis=0), verbose=0)
+
     predict_class = classes[np.argmax(predict_results)]
     confidence_score = format(np.max(predict_results), '.4f')
     return predict_class, confidence_score
