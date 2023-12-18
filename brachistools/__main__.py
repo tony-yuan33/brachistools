@@ -25,8 +25,7 @@ except Exception as err:
 import logging
 
 from brachistools.segmentation import segmentation_pipeline, default_segmentation_params
-# TODO: Import components
-# from brachistools.classification import ...
+from brachistools.classification import classification_pipeline
 from brachistools.io import load_folder, imread, imsave, labels_to_xml, xml_to_labels
 from brachistools.version import version_str
 
@@ -143,8 +142,7 @@ def main():
         from configparser import ConfigParser
 
         try:
-            config_path = Path.home().joinpath(
-                '.brachistools', 'config.ini')
+            config_path = 'config.ini'
             config = ConfigParser()
             config.read(config_path)
         except:

@@ -102,15 +102,10 @@ class Segment1Thread(QtCore.QThread):
         self.labeled_nuclei = labeled_nuclei
 
 class Classify1Thread(QtCore.QThread):
-    MAX_PROGRESS = 11
-
-    update_progress = QtCore.Signal(int)
-
     def __init__(self, input_image, parent=None):
         super().__init__(parent)
 
         self.input_image = input_image
-
 
     def run(self):
         import cv2
@@ -297,16 +292,15 @@ class MainWindow(QMainWindow):
         classify_progress = QProgressDialog(self)
         classify_progress.setWindowTitle("Classification in progress...")
         classify_progress.setLabelText("Please wait")
-        classify_progress.setRange(0, Classify1Thread.MAX_PROGRESS)
+        classify_progress.setRange(0, 0)  # indeterminate
         classify_progress.setModal(True)
         classify_progress.canceled.connect(classify_thread.quit)
         classify_thread.finished.connect(classify_progress.accept)
-        classify_thread.update_progress.connect(classify_progress.setValue)
         classify_thread.start()
         classify_progress.exec()
 
         predict_class, confidence_score = classify_thread.predict_class, classify_thread.confidence_score
-        self.DiagnosisTextEdit.setPlainText(f"Predict : {predict_class}\nConfidence : {confidence_score}")
+        self.DiagnosisTextEdit.setPlainText(f"{predict_class}\nConfidence : {confidence_score}")
 
     def segment_all(self):
         QMessageBox.critical(self, "Not supported", "Sorry, this option is under development")
