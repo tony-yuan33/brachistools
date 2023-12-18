@@ -108,15 +108,11 @@ class Classify1Thread(QtCore.QThread):
         self.input_image = input_image
 
     def run(self):
-        import cv2
-        import numpy as np
         from brachistools.classification import (
             classification_pipeline
         )
 
-        img = cv2.resize(self.input_image, (224, 224))
-        img = np.array(img)
-        predict_class, confidence_score = classification_pipeline(img)
+        predict_class, confidence_score = classification_pipeline(self.input_image)
         self.predict_class = predict_class
         self.confidence_score = confidence_score
 

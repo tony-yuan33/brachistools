@@ -1,7 +1,6 @@
 
 import os, sys
 
-import cv2
 import logging
 import pathlib
 from pathlib import Path
