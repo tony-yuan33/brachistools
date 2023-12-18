@@ -201,8 +201,8 @@ def main():
                     np.save(savepath(root_fn + '_xml2seg.npy'), labels)
             except Exception as e:
                 logger.critical(
-                    "Failed to transform segmentation XML '%%' "
-                    "due to exception: %%", seg_xml, e)
+                    "Failed to transform segmentation XML '%s' "
+                    "due to exception: %s", seg_xml, e)
 
     if args.command == 'segment':
         segment_params = default_segmentation_params.copy()
@@ -228,8 +228,8 @@ def main():
                     np.save(savepath(root + '_mask_labels.npy'), labeled_nucleus)
             except Exception as e:
                 logger.critical(
-                    "Failed to segmentation picture '%%' "
-                    "due to exception: %%", fn, e)
+                    "Failed to segmentation picture '%s' "
+                    "due to exception: %s", fn, e)
 
     if args.command == 'classify':
         with open('./result.csv', 'w', newline='') as csvfile:

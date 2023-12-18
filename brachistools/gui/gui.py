@@ -103,7 +103,7 @@ class Segment1Thread(QtCore.QThread):
             self.labeled_nuclei = labeled_nuclei
             self.success = True
         except Exception as e:
-            logger.critical("Exception during segmentation: %%", e)
+            logger.critical("Exception during segmentation: %s", e)
             self.update_progress.emit(11)
             self.success = False
 
@@ -124,7 +124,7 @@ class Classify1Thread(QtCore.QThread):
             self.confidence_score = confidence_score
             self.success = True
         except Exception as e:
-            logger.critical("Exception during classification: %%", e)
+            logger.critical("Exception during classification: %s", e)
             self.success = False
 
 class SegmentationWindow(QMainWindow):
