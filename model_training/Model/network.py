@@ -90,6 +90,3 @@ def ResNet50(classes):
 
     model = Model(img_input, x, name='resnet50')
     return model
-
-# test = ResNet50(2)
-# test.summary()
