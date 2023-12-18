@@ -273,6 +273,12 @@ class MainWindow(QMainWindow):
         segment_thread.start()
         segment_progress.exec()
 
+        if segment_progress.wasCanceled():
+            QMessageBox.information(self,
+                "Segmentation canceled",
+                "You can redo by clicking segmentation button.")
+            return
+
         nuclei, labeled_nuclei = segment_thread.nuclei, segment_thread.labeled_nuclei
         label_names = set(labeled_nuclei.flat)
         label_names.discard(0)
@@ -290,6 +296,7 @@ class MainWindow(QMainWindow):
         )
 
         classify_progress = QProgressDialog(self)
+        classify_progress.setFixedSize(300, 150)
         classify_progress.setWindowTitle("Classification in progress...")
         classify_progress.setLabelText("Please wait")
         classify_progress.setRange(0, 0)  # indeterminate
@@ -298,6 +305,12 @@ class MainWindow(QMainWindow):
         classify_thread.finished.connect(classify_progress.accept)
         classify_thread.start()
         classify_progress.exec()
+
+        if classify_progress.wasCanceled():
+            QMessageBox.information(self,
+                "Classification canceled",
+                "You can redo by clicking classification button.")
+            return
 
         predict_class, confidence_score = classify_thread.predict_class, classify_thread.confidence_score
         self.DiagnosisTextEdit.setPlainText(f"{predict_class}\nConfidence : {confidence_score}")
