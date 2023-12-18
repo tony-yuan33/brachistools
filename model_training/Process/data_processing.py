@@ -1,3 +1,6 @@
+# The data processing flow reference: https://www.kaggle.com/code/mohamedsawahzc/cancer-classification-using-cnn-95
+
+
 import numpy as np
 from keras.utils import to_categorical  # one-hot
 import cv2
