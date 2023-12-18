@@ -1,3 +1,6 @@
+# ResNet50 model set up reference: https://blog.csdn.net/sinom21/article/details/128126163
+
+
 from keras import layers
 from keras.layers import Input, Activation, BatchNormalization, Flatten
 from keras.layers import Dense, Conv2D, MaxPooling2D, ZeroPadding2D, AveragePooling2D, Dropout
