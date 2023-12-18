@@ -58,48 +58,54 @@ class Segment1Thread(QtCore.QThread):
         self.vahadane_transform = vahadane(**params['vahadane'])
 
     def run(self):
-        from skimage import img_as_ubyte
-        from brachistools.segmentation import (
-            vahadane, equalize_adapthist,
-            inverted_gray_scale, threshold_otsu,
-            remove_small_objects, remove_small_holes,
-            distance_transform_edt, peak_local_max,
-            peaks_to_markers, watershed,
-            merge_small_labels
-        )
+        try:
+            from skimage import img_as_ubyte
+            from brachistools.segmentation import (
+                vahadane, equalize_adapthist,
+                inverted_gray_scale, threshold_otsu,
+                remove_small_objects, remove_small_holes,
+                distance_transform_edt, peak_local_max,
+                peaks_to_markers, watershed,
+                merge_small_labels
+            )
 
-        input_image = img_as_ubyte(self.input_image)
-        image_H = self.vahadane_transform(input_image)
-        self.update_progress.emit(1)
+            input_image = img_as_ubyte(self.input_image)
+            image_H = self.vahadane_transform(input_image)
+            self.update_progress.emit(1)
 
-        image_H = equalize_adapthist(image_H, **self.params['equalize_adapthist'])
-        self.update_progress.emit(2)
+            image_H = equalize_adapthist(image_H, **self.params['equalize_adapthist'])
+            self.update_progress.emit(2)
 
-        image_H = img_as_ubyte(input_image)
-        image_H = inverted_gray_scale(image_H)
-        self.update_progress.emit(3)
+            image_H = img_as_ubyte(input_image)
+            image_H = inverted_gray_scale(image_H)
+            self.update_progress.emit(3)
 
-        nuclei = image_H > threshold_otsu(image_H)
-        self.update_progress.emit(4)
+            nuclei = image_H > threshold_otsu(image_H)
+            self.update_progress.emit(4)
 
-        nuclei = remove_small_objects(nuclei, **self.params['remove_small_objects'])
-        self.update_progress.emit(5)
-        nuclei = remove_small_holes(nuclei, **self.params['remove_small_holes'])
-        self.update_progress.emit(6)
+            nuclei = remove_small_objects(nuclei, **self.params['remove_small_objects'])
+            self.update_progress.emit(5)
+            nuclei = remove_small_holes(nuclei, **self.params['remove_small_holes'])
+            self.update_progress.emit(6)
 
-        distances = distance_transform_edt(nuclei)
-        self.update_progress.emit(7)
-        local_maxima_idx = peak_local_max(distances, **self.params['peak_local_max'])
-        self.update_progress.emit(8)
-        markers = peaks_to_markers(local_maxima_idx, shape=nuclei.shape)
-        self.update_progress.emit(9)
-        labeled_nuclei = watershed(-distances, markers, mask=nuclei)
-        self.update_progress.emit(10)
-        labeled_nuclei = merge_small_labels(labeled_nuclei, **self.params['merge_small_labels'])
-        self.update_progress.emit(11)
+            distances = distance_transform_edt(nuclei)
+            self.update_progress.emit(7)
+            local_maxima_idx = peak_local_max(distances, **self.params['peak_local_max'])
+            self.update_progress.emit(8)
+            markers = peaks_to_markers(local_maxima_idx, shape=nuclei.shape)
+            self.update_progress.emit(9)
+            labeled_nuclei = watershed(-distances, markers, mask=nuclei)
+            self.update_progress.emit(10)
+            labeled_nuclei = merge_small_labels(labeled_nuclei, **self.params['merge_small_labels'])
+            self.update_progress.emit(11)
 
-        self.nuclei = nuclei
-        self.labeled_nuclei = labeled_nuclei
+            self.nuclei = nuclei
+            self.labeled_nuclei = labeled_nuclei
+            self.success = True
+        except Exception as e:
+            logger.critical("Exception during segmentation: %%", e)
+            self.update_progress.emit(11)
+            self.success = False
 
 class Classify1Thread(QtCore.QThread):
     def __init__(self, input_image, parent=None):
@@ -108,13 +114,18 @@ class Classify1Thread(QtCore.QThread):
         self.input_image = input_image
 
     def run(self):
-        from brachistools.classification import (
-            classification_pipeline
-        )
+        try:
+            from brachistools.classification import (
+                classification_pipeline
+            )
 
-        predict_class, confidence_score = classification_pipeline(self.input_image)
-        self.predict_class = predict_class
-        self.confidence_score = confidence_score
+            predict_class, confidence_score = classification_pipeline(self.input_image)
+            self.predict_class = predict_class
+            self.confidence_score = confidence_score
+            self.success = True
+        except Exception as e:
+            logger.critical("Exception during classification: %%", e)
+            self.success = False
 
 class SegmentationWindow(QMainWindow):
     def __init__(self, parent, img_fn) -> None:
@@ -275,6 +286,12 @@ class MainWindow(QMainWindow):
                 "You can redo by clicking segmentation button.")
             return
 
+        if not segment_thread.success:
+            QMessageBox.critical(self,
+                "Segmentation failed",
+                "Segmentation failed due to exception")
+            return
+
         nuclei, labeled_nuclei = segment_thread.nuclei, segment_thread.labeled_nuclei
         label_names = set(labeled_nuclei.flat)
         label_names.discard(0)
@@ -306,6 +323,12 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self,
                 "Classification canceled",
                 "You can redo by clicking classification button.")
+            return
+
+        if not classify_thread.success:
+            QMessageBox.critical(self,
+                "Classification failed",
+                "Classification failed due to exception")
             return
 
         predict_class, confidence_score = classify_thread.predict_class, classify_thread.confidence_score
