@@ -13,7 +13,7 @@ def load_data(directory, norm_size):
     for IMAGE_NAME in tqdm(os.listdir(directory)):
         PATH = os.path.join(directory, IMAGE_NAME)
         _, figuretype = os.path.splitext(PATH)
-        if figuretype == ".png":
+        if figuretype.lower() == ".png":
             img = read(PATH)
             img = cv2.resize(img, (norm_size, norm_size))
             IMG.append(np.array(img))
