@@ -16,7 +16,8 @@ Main stream systems (Linux, Windows and macOS) are supposedly supported for runn
 
 ### Dependencies
 Brachistools depends on the following packages:
-- [pytorch](https://pytorch.org/)
+- [tensorflow](https://www.tensorflow.org/)
+- [keras](https://keras.io/)
 - [PyQt6](http://pyqt.sourceforge.net/Docs/PyQt6/) or [PyQt5](http://pyqt.sourceforge.net/Docs/PyQt5/)
 - [QtPy](https://pypi.org/project/QtPy/)
 - [numpy](http://www.numpy.org/) (>=1.20.0)
@@ -85,22 +86,6 @@ python -m pip install notebook matplotlib
 ```sh
 python -m brachistools config --param_dir FILE_FOLDER_CONTAINING_MODEL_PARAMS
 ```
-
-#### GPU version (CUDA) on Windows or Linux
-
-If your NVIDIA GPU has CUDA support, you can install GPU version of PyTorch to replace the default CPU version. However, configuring your CUDA device and installing the correct version of `pytorch` can be troublesome. The following is just a brief guide that might have issues on your system.
-
-1. Install the CUDA toolkit (choose one from version 11.x) [here](https://developer.nvidia.com/cuda-toolkit-archive). This is a safe option for configuring your GPU drivers and CUDA.
-2. Remove the original CPU version (`torch`) of PyTorch:
-```shell
-python -m pip uninstall torch
-```
-3. Find a version of PyTorch that matches your CUDA version [here](https://pytorch.org/get-started/locally/). You might need to search for an older version of PyTorch [here](https://pytorch.org/get-started/previous-versions/). Remember to remove the `torchvision` and `torchaudio` requirements as they are not required by Brachistools. You will end up running a command like this (`conda` is preferred to `pip`)
-```shell
-conda install pytorch pytorch-cuda=YOUR_CUDA_VERSION -c pytorch -c nvidia
-```
-
-After correct installation of `pytorch`, Brachistools will automatically recognize your CUDA device upon being imported.
 
 # Running locally
 
