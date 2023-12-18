@@ -331,7 +331,7 @@ class MainWindow(QMainWindow):
 
         self.clear_panel()
 
-        input_filenames = load_folder(folder_path, ['.PNG', '.JPG', '.JPEG'])
+        input_filenames = load_folder(folder_path, ['PNG', 'JPG', 'JPEG'])
         if not input_filenames:
             QMessageBox.critical(self, "Invalid operation", "Input folder does not contain any PNG/JPG files")
         else:
