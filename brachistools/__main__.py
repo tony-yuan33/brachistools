@@ -233,7 +233,7 @@ def main():
                     "Failed to segmentation picture '{}' "
                     "due to exception: {}", fn, e)
 
-        if args.command == 'classify':
+    if args.command == 'classify':
         with open('./result.csv', 'w', newline='') as csvfile:
             fieldnames = ['Image Name', 'Predict', 'Confidence']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
