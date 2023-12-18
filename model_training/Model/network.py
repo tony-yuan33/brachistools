@@ -1,3 +1,10 @@
+"""
+The ResNet50 model set up reference:
+https://blog.csdn.net/sinom21/article/details/128126163
+
+Adapted by LI Wenjun
+""" 
+
 from keras import layers
 from keras.layers import Input, Activation, BatchNormalization, Flatten
 from keras.layers import Dense, Conv2D, MaxPooling2D, ZeroPadding2D, AveragePooling2D, Dropout
@@ -87,6 +94,3 @@ def ResNet50(classes):
 
     model = Model(img_input, x, name='resnet50')
     return model
-
-# test = ResNet50(2)
-# test.summary()
