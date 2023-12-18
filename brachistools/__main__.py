@@ -7,6 +7,7 @@ import argparse
 from pathlib import Path
 import xml.etree.ElementTree as ET
 import os, sys
+import csv
 
 try:
     from brachistools.gui import gui
@@ -232,11 +233,18 @@ def main():
                     "Failed to segmentation picture '{}' "
                     "due to exception: {}", fn, e)
 
-    if args.command == 'classify':
-        for fn in image_names:
-            image = imread(fn)
-            predict_class, confidence_score = classification_pipeline(image)
-            print(f"Predict : {predict_class}\nConfidence : {confidence_score}")
+        if args.command == 'classify':
+        with open('./result.csv', 'w', newline='') as csvfile:
+            fieldnames = ['Image Name', 'Predict', 'Confidence']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writeheader()
+
+            for fn in image_names:
+                image = imread(fn)
+                predict_class, confidence_score = classification_pipeline(image)
+                writer.writerow(
+                    {'Image Name': fn, 'Predict': predict_class, 'Confidence': confidence_score})
 
 if __name__ == "__main__":
     main()
